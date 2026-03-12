@@ -9,8 +9,8 @@ export default function KVKKContent({ siteData }: { siteData: any }) {
     return (
         <div className="min-h-screen bg-[#FDFCFB] text-[#2D2926] font-sans">
             <NavBar
-                whatsappUrl={siteData.contact.whatsappUrl}
-                brand={siteData.brand}
+                whatsappUrl={siteData?.contact?.whatsappUrl}
+                brand={siteData?.brand}
             />
 
             <main className="pt-40 pb-24 px-6 md:px-12 max-w-4xl mx-auto">
@@ -27,7 +27,7 @@ export default function KVKKContent({ siteData }: { siteData: any }) {
                     <section>
                         <h2 className="text-xl font-serif text-[#2D2926] mb-4">1. Veri Sorumlusu</h2>
                         <p>
-                            6698 sayılı Kişisel Verilerin Korunması Kanunu (“KVKK”) uyarınca, kişisel verileriniz; veri sorumlusu olarak <strong>{siteData.brand.siteName}</strong> (“Şirket”) tarafından aşağıda açıklanan kapsamda işlenebilecektir.
+                            6698 sayılı Kişisel Verilerin Korunması Kanunu (“KVKK”) uyarınca, kişisel verileriniz; veri sorumlusu olarak <strong>{siteData?.brand?.siteName || 'Mitra Event'}</strong> (“Şirket”) tarafından aşağıda açıklanan kapsamda işlenebilecektir.
                         </p>
                     </section>
 
@@ -79,14 +79,14 @@ export default function KVKKContent({ siteData }: { siteData: any }) {
                     <section className="bg-[#F8F7F5] p-8 rounded-[2rem] border border-stone-100">
                         <p className="text-sm font-light italic mb-2">Başvurularınız için:</p>
                         <p className="text-sm font-bold text-[#2D2926]">
-                            {siteData.contact.email} <br />
-                            {siteData.footer.address}
+                            {siteData?.contact?.email || ''} <br />
+                            {siteData?.footer?.address || ''}
                         </p>
                     </section>
                 </div>
             </main>
 
-            <Footer data={siteData.footer} brand={siteData.brand} />
+            <Footer data={siteData?.footer} brand={siteData?.brand} />
         </div>
     );
 }

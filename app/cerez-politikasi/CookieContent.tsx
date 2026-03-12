@@ -9,8 +9,8 @@ export default function CookieContent({ siteData }: { siteData: any }) {
     return (
         <div className="min-h-screen bg-[#FDFCFB] text-[#2D2926] font-sans">
             <NavBar
-                whatsappUrl={siteData.contact.whatsappUrl}
-                brand={siteData.brand}
+                whatsappUrl={siteData?.contact?.whatsappUrl}
+                brand={siteData?.brand}
             />
 
             <main className="pt-40 pb-24 px-6 md:px-12 max-w-4xl mx-auto">
@@ -28,7 +28,7 @@ export default function CookieContent({ siteData }: { siteData: any }) {
                         <h2 className="text-xl font-serif text-[#2D2926] mb-4">1. Çerez Nedir?</h2>
                         <p>
                             Çerezler, ziyaret ettiğiniz internet siteleri tarafından tarayıcılar aracılığıyla cihazınıza veya ağ sunucusuna depolanan küçük metin dosyalarıdır.
-                            <strong> {siteData.brand.siteName}</strong> olarak, ziyaretçilerimizin kullanıcı deneyimini iyileştirmek ve sitemizin verimli çalışmasını sağlamak amacıyla çerezler kullanmaktayız.
+                            <strong> {siteData?.brand?.siteName || 'Mitra Event'}</strong> olarak, ziyaretçilerimizin kullanıcı deneyimini iyileştirmek ve sitemizin verimli çalışmasını sağlamak amacıyla çerezler kullanmaktayız.
                         </p>
                     </section>
 
@@ -72,13 +72,13 @@ export default function CookieContent({ siteData }: { siteData: any }) {
                     <section className="bg-[#F8F7F5] p-8 rounded-[2rem] border border-stone-100">
                         <p className="text-sm font-light italic mb-2">Sorularınız için bizimle iletişime geçebilirsiniz:</p>
                         <p className="text-sm font-bold text-[#2D2926]">
-                            {siteData.contact.email}
+                            {siteData?.contact?.email || ''}
                         </p>
                     </section>
                 </div>
             </main>
 
-            <Footer data={siteData.footer} brand={siteData.brand} />
+            <Footer data={siteData?.footer} brand={siteData?.brand} />
         </div>
     );
 }

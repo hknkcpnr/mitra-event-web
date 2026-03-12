@@ -40,8 +40,8 @@ const Footer: React.FC<FooterProps> = ({ data, brand }) => {
                     <div className="space-y-8">
                         {brand?.logo ? (
                             <img
-                                src={brand.logo}
-                                alt={brand.siteName}
+                                src={brand?.logo}
+                                alt={brand?.siteName || 'Logo'}
                                 className="h-12 w-auto object-contain"
                             />
                         ) : (
