@@ -34,7 +34,7 @@ const Footer: React.FC<FooterProps> = ({ data, brand }) => {
     return (
         <footer className="bg-white border-t border-[#2D2926]/5 pt-24 pb-12 px-6">
             <div className="max-w-7xl mx-auto">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-16 mb-20">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-16 mb-20">
 
                     {/* Brand Column */}
                     <div className="space-y-8">
@@ -101,23 +101,6 @@ const Footer: React.FC<FooterProps> = ({ data, brand }) => {
                         </ul>
                     </div>
 
-                    {/* Newsletter / CTA */}
-                    <div className="space-y-8">
-                        <h4 className="text-[10px] font-extrabold tracking-[0.3em] uppercase text-[#A68BA6]">İlham Alın</h4>
-                        <div className="relative group">
-                            <input
-                                type="email"
-                                placeholder="E-posta adresiniz"
-                                className="w-full bg-stone-50 border-b border-stone-200 py-4 pl-0 pr-10 outline-none focus:border-[#A68BA6] transition-all font-light text-sm bg-transparent"
-                            />
-                            <button className="absolute right-0 top-1/2 -translate-y-1/2 text-[#2D2926] hover:text-[#A68BA6] transition-all duration-300">
-                                <ArrowRight size={20} />
-                            </button>
-                        </div>
-                        <p className="text-[10px] text-[#A68BA6] font-medium leading-relaxed italic">
-                            Trendler ve özel davet tüyoları için bültenimize katılın.
-                        </p>
-                    </div>
 
                 </div>
 
