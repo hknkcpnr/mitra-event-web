@@ -45,7 +45,7 @@ const ProjectsSlider: React.FC<ProjectsSliderProps> = ({ data, meta, showIndex }
     };
 
     return (
-        <section id="portföy" className="scroll-mt-24 min-h-screen flex flex-col justify-center py-24 px-6 bg-[#F8F7F5] overflow-hidden">
+        <section id="portföy" className="scroll-mt-24 min-h-screen flex flex-col justify-center py-32 px-6 bg-white overflow-hidden">
             <div className="max-w-7xl mx-auto">
                 <div className="flex justify-between items-end mb-16">
                     <div>
@@ -71,7 +71,7 @@ const ProjectsSlider: React.FC<ProjectsSliderProps> = ({ data, meta, showIndex }
                         {data?.map((project, index) => (
                             <div
                                 key={project?.id || index}
-                                className="relative flex-shrink-0 w-[80%] sm:w-[45%] lg:w-[31%] aspect-[4/5] rounded-[2.5rem] overflow-hidden group snap-center md:snap-start shadow-sm hover:shadow-2xl transition-all duration-500"
+                                className="relative flex-shrink-0 w-[280px] sm:w-[320px] md:w-[380px] lg:w-[400px] aspect-[4/5] rounded-[3rem] overflow-hidden group snap-start shadow-xl hover:shadow-2xl transition-all duration-700 bg-white"
                             >
                                 {showIndex && (
                                     <div className="absolute top-6 left-6 z-[30] w-10 h-10 bg-orange-600 text-white rounded-2xl flex items-center justify-center font-black shadow-2xl border-2 border-white/30 animate-in zoom-in duration-300">
