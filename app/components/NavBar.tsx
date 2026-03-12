@@ -57,7 +57,7 @@ const NavBar: React.FC<NavBarProps> = ({ whatsappUrl, brand }) => {
 
     return (
         <>
-            <nav className={`fixed w-full z-50 transition-all duration-500 px-6 md:px-12 ${scrolled ? 'bg-white/80 backdrop-blur-md py-4' : 'bg-transparent py-8'}`}>
+            <nav className={`fixed w-full z-50 transition-all duration-500 px-3 md:px-12 ${scrolled ? 'bg-white/80 backdrop-blur-md py-4' : 'bg-transparent py-8'}`}>
                 <div className="max-w-7xl mx-auto flex justify-between items-center">
                     <a href="/" className="flex flex-col group cursor-pointer" onClick={(e) => {
                         if (window.location.pathname === '/') {
