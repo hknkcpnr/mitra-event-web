@@ -3,10 +3,18 @@
 import { useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 
+/**
+ * Ziyaretçi ve Sayfa Görüntüleme Takip Bileşeni (Client-side)
+ * Sayfa değişimlerini algılar ve istatistik API'sine veri gönderir.
+ * Admin paneli trafiğini istatistiklere dahil etmez.
+ */
 export default function VisitorTracker() {
     const pathname = usePathname();
 
     useEffect(() => {
+        // Admin sayfalarını takip etme
+        if (pathname && pathname.startsWith('/admin')) return;
+
         // Ziyaretçi takibi (Session bazlı - Tarayıcı kapatılana kadar 1 kez sayılır)
         const isNewVisit = !sessionStorage.getItem('visited');
 

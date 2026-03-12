@@ -1,162 +1,182 @@
 import { NextRequest, NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
-import crypto from 'crypto';
+import { prisma } from '@/lib/prisma';
+import { getSessionWithUser } from '@/lib/auth';
 
-const EVENTS_PATH = path.join(process.cwd(), 'data', 'events.json');
-const ACTIVE_SESSIONS_PATH = path.join(process.cwd(), 'data', 'active_sessions.json');
-const COOKIE_NAME = 'admin_session';
+type EventPayload = {
+  id?: string;
+  title?: string;
+  date?: string;
+  description?: string;
+  firstName?: string;
+  lastName?: string;
+  phone?: string;
+  paymentStatus?: string;
+  reminderDays?: string | number;
+  price?: string;
+  deposit?: string;
+  eventType?: string;
+};
 
-function getActiveSessions(): Record<string, string> {
-    try {
-        if (!fs.existsSync(ACTIVE_SESSIONS_PATH)) return {};
-        const raw = fs.readFileSync(ACTIVE_SESSIONS_PATH, 'utf-8');
-        return JSON.parse(raw);
-    } catch {
-        return {};
-    }
+function toResponseEvent(event: {
+  id: string;
+  title: string;
+  description: string | null;
+  date: Date | null;
+  eventType: string;
+  firstName: string;
+  lastName: string;
+  phone: string;
+  price: string;
+  paymentStatus: string;
+  reminderDays: number;
+  createdAt: Date;
+  updatedAt: Date;
+  deposit?: string;
+}) {
+  return {
+    id: event.id,
+    title: event.title,
+    date: event.date ? event.date.toISOString().split('T')[0] : null,
+    description: event.description ?? '',
+    eventType: event.eventType,
+    firstName: event.firstName,
+    lastName: event.lastName,
+    phone: event.phone,
+    price: event.price,
+    deposit: event.deposit ?? '',
+    paymentStatus: event.paymentStatus,
+    reminderDays: event.reminderDays,
+    createdAt: event.createdAt.toISOString(),
+    updatedAt: event.updatedAt.toISOString(),
+  };
 }
 
-function getEvents(): any[] {
-    try {
-        if (!fs.existsSync(EVENTS_PATH)) {
-            fs.writeFileSync(EVENTS_PATH, '[]', 'utf-8');
-            return [];
-        }
-        const raw = fs.readFileSync(EVENTS_PATH, 'utf-8');
-        return JSON.parse(raw);
-    } catch {
-        return [];
-    }
+async function ensureAuthorized(request: NextRequest) {
+  const session = await getSessionWithUser(request);
+  if (!session) {
+    return NextResponse.json({ error: 'Yetkisiz erişim.' }, { status: 401 });
+  }
+  return null;
 }
 
-function saveEvents(data: any[]) {
-    fs.writeFileSync(EVENTS_PATH, JSON.stringify(data, null, 2), 'utf-8');
-}
-
-/** Returns username if authenticated, else null */
-function authenticate(request: NextRequest): string | null {
-    const token = request.cookies.get(COOKIE_NAME)?.value;
-    if (!token) return null;
-    const sessions = getActiveSessions();
-    return sessions[token] || null;
-}
-
+/**
+ * Tüm etkinlikleri/organizasyonları listeleyen GET metodu.
+ */
 export async function GET(request: NextRequest) {
-    if (!authenticate(request)) {
-        return NextResponse.json({ error: 'Yetkisiz erişim.' }, { status: 401 });
-    }
-    const events = getEvents();
-    return NextResponse.json(events, { status: 200 });
+  const authError = await ensureAuthorized(request);
+  if (authError) return authError;
+
+  const events = await prisma.event.findMany({ orderBy: { date: 'asc' } });
+  return NextResponse.json(events.map(toResponseEvent), { status: 200 });
 }
 
+/**
+ * Yeni bir etkinlik/organizasyon oluşturan POST metodu.
+ */
 export async function POST(request: NextRequest) {
-    if (!authenticate(request)) {
-        return NextResponse.json({ error: 'Yetkisiz erişim.' }, { status: 401 });
+  const authError = await ensureAuthorized(request);
+  if (authError) return authError;
+
+  try {
+    const body = (await request.json()) as EventPayload;
+    const { title, date, description, firstName, lastName, phone, paymentStatus, reminderDays, price, deposit, eventType } = body;
+
+    if (!title || !date || !firstName || !lastName || !phone) {
+      return NextResponse.json({ error: 'Gerekli alanları doldurunuz.' }, { status: 400 });
     }
 
-    try {
-        const body = await request.json();
-        const { title, date, description, firstName, lastName, phone, paymentStatus, reminderDays, price, eventType } = body;
+    const newEvent = await prisma.event.create({
+      data: {
+        title: title.trim(),
+        date: new Date(date),
+        description: description || '',
+        eventType: eventType || 'diğer',
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+        phone: phone.trim(),
+        price: price || '',
+        deposit: deposit || '',
+        paymentStatus: paymentStatus || 'beklemede',
+        reminderDays: Number.isNaN(Number(reminderDays)) ? 0 : Number(reminderDays),
+      } as any,
+    });
 
-        if (!title || !date || !firstName || !lastName || !phone) {
-            return NextResponse.json({ error: 'Gerekli alanları doldurunuz.' }, { status: 400 });
-        }
-
-        const events = getEvents();
-        const newEvent = {
-            id: crypto.randomUUID(),
-            title,
-            date,
-            description: description || '',
-            eventType: eventType || 'diğer',
-            firstName,
-            lastName,
-            phone,
-            price: price || '',
-            paymentStatus: paymentStatus || 'beklemede',
-            reminderDays: reminderDays ? parseInt(reminderDays, 10) : 0,
-            createdAt: new Date().toISOString()
-        };
-
-        events.push(newEvent);
-        saveEvents(events);
-
-        return NextResponse.json({ success: true, event: newEvent }, { status: 201 });
-    } catch (e) {
-        return NextResponse.json({ error: 'Organizasyon eklenirken hata oluştu.' }, { status: 500 });
-    }
+    return NextResponse.json({ success: true, event: toResponseEvent(newEvent) }, { status: 201 });
+  } catch (error) {
+    console.error('Create event error:', error);
+    return NextResponse.json({ error: 'Organizasyon eklenirken hata oluştu.' }, { status: 500 });
+  }
 }
 
+/**
+ * Mevcut bir etkinliğin detaylarını güncelleyen PATCH metodu.
+ */
 export async function PATCH(request: NextRequest) {
-    if (!authenticate(request)) {
-        return NextResponse.json({ error: 'Yetkisiz erişim.' }, { status: 401 });
+  const authError = await ensureAuthorized(request);
+  if (authError) return authError;
+
+  try {
+    const body = (await request.json()) as EventPayload;
+    const { id, title, date, description, firstName, lastName, phone, paymentStatus, reminderDays, price, deposit, eventType } = body;
+
+    if (!id) {
+      return NextResponse.json({ error: "Organizasyon ID'si gerekli." }, { status: 400 });
     }
 
-    try {
-        const body = await request.json();
-        const { id, title, date, description, firstName, lastName, phone, paymentStatus, reminderDays, price, eventType } = body;
-
-        if (!id) {
-            return NextResponse.json({ error: 'Organizasyon ID\'si gerekli.' }, { status: 400 });
-        }
-
-        const events = getEvents();
-        const index = events.findIndex(e => e.id === id);
-
-        if (index === -1) {
-            return NextResponse.json({ error: 'Organizasyon bulunamadı.' }, { status: 404 });
-        }
-
-        const updatedEvent = {
-            ...events[index],
-            title: title !== undefined ? title : events[index].title,
-            date: date !== undefined ? date : events[index].date,
-            description: description !== undefined ? description : events[index].description,
-            eventType: eventType !== undefined ? eventType : events[index].eventType,
-            firstName: firstName !== undefined ? firstName : events[index].firstName,
-            lastName: lastName !== undefined ? lastName : events[index].lastName,
-            phone: phone !== undefined ? phone : events[index].phone,
-            price: price !== undefined ? price : events[index].price,
-            paymentStatus: paymentStatus !== undefined ? paymentStatus : events[index].paymentStatus,
-            reminderDays: reminderDays !== undefined ? parseInt(reminderDays, 10) : events[index].reminderDays,
-            updatedAt: new Date().toISOString()
-        };
-
-        events[index] = updatedEvent;
-        saveEvents(events);
-
-        return NextResponse.json({ success: true, event: updatedEvent }, { status: 200 });
-    } catch (e) {
-        return NextResponse.json({ error: 'Organizasyon güncellenirken hata oluştu.' }, { status: 500 });
+    const existing = await prisma.event.findUnique({ where: { id } });
+    if (!existing) {
+      return NextResponse.json({ error: 'Organizasyon bulunamadı.' }, { status: 404 });
     }
+
+    const updatedEvent = await prisma.event.update({
+      where: { id },
+      data: {
+        ...(title !== undefined && { title }),
+        ...(date !== undefined && { date: date ? new Date(date) : null }),
+        ...(description !== undefined && { description }),
+        ...(eventType !== undefined && { eventType }),
+        ...(firstName !== undefined && { firstName }),
+        ...(lastName !== undefined && { lastName }),
+        ...(phone !== undefined && { phone }),
+        ...(price !== undefined && { price }),
+        ...(deposit !== undefined && { deposit }),
+        ...(paymentStatus !== undefined && { paymentStatus }),
+        ...(reminderDays !== undefined && {
+          reminderDays: Number.isNaN(Number(reminderDays)) ? existing.reminderDays : Number(reminderDays),
+        }),
+      } as any,
+    });
+
+    return NextResponse.json({ success: true, event: toResponseEvent(updatedEvent) }, { status: 200 });
+  } catch (error) {
+    console.error('Update event error:', error);
+    return NextResponse.json({ error: 'Organizasyon güncellenirken hata oluştu.' }, { status: 500 });
+  }
 }
 
+/**
+ * Bir etkinliği takvimden silen DELETE metodu.
+ */
 export async function DELETE(request: NextRequest) {
-    if (!authenticate(request)) {
-        return NextResponse.json({ error: 'Yetkisiz erişim.' }, { status: 401 });
+  const authError = await ensureAuthorized(request);
+  if (authError) return authError;
+
+  try {
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
+    if (!id) {
+      return NextResponse.json({ error: "Organizasyon ID'si gerekli." }, { status: 400 });
     }
 
-    try {
-        const { searchParams } = new URL(request.url);
-        const id = searchParams.get('id');
-
-        if (!id) {
-            return NextResponse.json({ error: 'Organizasyon ID\'si gerekli.' }, { status: 400 });
-        }
-
-        const events = getEvents();
-        const index = events.findIndex(e => e.id === id);
-
-        if (index === -1) {
-            return NextResponse.json({ error: 'Organizasyon bulunamadı.' }, { status: 404 });
-        }
-
-        events.splice(index, 1);
-        saveEvents(events);
-
-        return NextResponse.json({ success: true }, { status: 200 });
-    } catch (e) {
-        return NextResponse.json({ error: 'Organizasyon silinirken hata oluştu.' }, { status: 500 });
+    const existing = await prisma.event.findUnique({ where: { id }, select: { id: true } });
+    if (!existing) {
+      return NextResponse.json({ error: 'Organizasyon bulunamadı.' }, { status: 404 });
     }
+
+    await prisma.event.delete({ where: { id } });
+    return NextResponse.json({ success: true }, { status: 200 });
+  } catch (error) {
+    console.error('Delete event error:', error);
+    return NextResponse.json({ error: 'Organizasyon silinirken hata oluştu.' }, { status: 500 });
+  }
 }

@@ -1,3 +1,4 @@
+"use client";
 import React, { useState, useEffect } from 'react';
 import { Quote } from 'lucide-react';
 
@@ -22,6 +23,11 @@ interface TestimonialsSliderProps {
     showIndex?: boolean;
 }
 
+/**
+ * Müşteri Yorumları (Testimonials) Kaydırıcı Bileşeni
+ * Müşterilerden gelen geri bildirimleri otomatik geçişli bir kart 
+ * yapısı (slider) içinde sunar.
+ */
 const TestimonialsSlider: React.FC<TestimonialsSliderProps> = ({ data, meta, showIndex }) => {
     const [activeIndex, setActiveIndex] = useState(0);
 

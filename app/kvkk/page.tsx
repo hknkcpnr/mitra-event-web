@@ -1,12 +1,19 @@
 import React from 'react';
-import fs from 'fs';
-import path from 'path';
+import { prisma } from '@/lib/prisma';
 import KVKKContent from './KVKKContent';
 
 async function getContent() {
-    const filePath = path.join(process.cwd(), 'data', 'content.json');
-    const fileContents = fs.readFileSync(filePath, 'utf8');
-    return JSON.parse(fileContents);
+    try {
+        const contentRecord = await prisma.content.findUnique({
+            where: { key: 'site_content' }
+        });
+        if (contentRecord) {
+            return JSON.parse(contentRecord.value);
+        }
+    } catch (e) {
+        console.error('Failed to parse site content from DB:', e);
+    }
+    return {};
 }
 
 export default async function KVKKPage() {

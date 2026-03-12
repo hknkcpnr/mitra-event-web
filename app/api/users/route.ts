@@ -1,154 +1,198 @@
 import { NextRequest, NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
-import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
+import { prisma } from '@/lib/prisma';
+import { getSessionWithUser } from '@/lib/auth';
 
-const USERS_PATH = path.join(process.cwd(), 'data', 'users.json');
-const ACTIVE_SESSIONS_PATH = path.join(process.cwd(), 'data', 'active_sessions.json');
-const COOKIE_NAME = 'admin_session';
-
-function getActiveSessions(): Record<string, string> {
-    try {
-        if (!fs.existsSync(ACTIVE_SESSIONS_PATH)) return {};
-        const raw = fs.readFileSync(ACTIVE_SESSIONS_PATH, 'utf-8');
-        return JSON.parse(raw);
-    } catch {
-        return {};
-    }
-}
-
-function getUsers() {
-    try {
-        if (!fs.existsSync(USERS_PATH)) return [];
-        const raw = fs.readFileSync(USERS_PATH, 'utf-8');
-        return JSON.parse(raw);
-    } catch {
-        return [];
-    }
-}
-
-function saveUsers(data: any) {
-    fs.writeFileSync(USERS_PATH, JSON.stringify(data, null, 2), 'utf-8');
-}
-
-/** Returns the logged-in user object (with role), or null */
-function authenticate(request: NextRequest): any | null {
-    const token = request.cookies.get(COOKIE_NAME)?.value;
-    if (!token) return null;
-    const sessions = getActiveSessions();
-    const username = sessions[token];
-    if (!username) return null;
-    const users = getUsers();
-    return users.find((u: any) => u.username === username) || null;
+function toSafeUser(user: { id: string; email: string; role: string; createdAt: Date }) {
+  return {
+    id: user.id,
+    username: user.email,
+    role: user.role || 'editor',
+    createdAt: user.createdAt,
+  };
 }
 
 /**
- * GET /api/users — List all users (any authenticated user)
+ * Sistemdeki tüm kayıtlı kullanıcıları getiren GET metodu.
  */
 export async function GET(request: NextRequest) {
-    const currentUser = authenticate(request);
-    if (!currentUser) {
-        return NextResponse.json({ error: 'Yetkisiz erişim.' }, { status: 401 });
-    }
+  const session = await getSessionWithUser(request);
+  if (!session) {
+    return NextResponse.json({ error: 'Yetkisiz erişim.' }, { status: 401 });
+  }
 
-    const users = getUsers();
-    const safeUsers = users.map((u: any) => ({
-        id: u.id,
-        username: u.username,
-        role: u.role || 'editor',
-        createdAt: u.createdAt,
-    }));
+  const users = await prisma.user.findMany({
+    orderBy: { createdAt: 'asc' },
+    select: { id: true, email: true, role: true, createdAt: true },
+  });
 
-    return NextResponse.json(safeUsers, { status: 200 });
+  return NextResponse.json(users.map(toSafeUser), { status: 200 });
 }
 
 /**
- * POST /api/users — Create a new user (admin only)
+ * Yeni bir yönetici veya editör oluşturan POST metodu.
+ * Şifreleri BCrypt ile hashleyerek güvenli bir şekilde kaydeder.
  */
 export async function POST(request: NextRequest) {
-    const currentUser = authenticate(request);
-    if (!currentUser) {
-        return NextResponse.json({ error: 'Yetkisiz erişim.' }, { status: 401 });
+  const session = await getSessionWithUser(request);
+  if (!session) {
+    return NextResponse.json({ error: 'Yetkisiz erişim.' }, { status: 401 });
+  }
+  if (session.user.role !== 'admin') {
+    return NextResponse.json({ error: 'Bu işlem için admin yetkisi gereklidir.' }, { status: 403 });
+  }
+
+  try {
+    const body = await request.json();
+    const { username, password, role } = body as {
+      username?: string;
+      password?: string;
+      role?: string;
+    };
+
+    if (!username || !password) {
+      return NextResponse.json({ error: 'Kullanıcı adı ve şifre zorunludur.' }, { status: 400 });
     }
-    if (currentUser.role !== 'admin') {
-        return NextResponse.json({ error: 'Bu işlem için admin yetkisi gereklidir.' }, { status: 403 });
+
+    const normalizedUsername = username.trim().toLowerCase();
+    const allowedRoles = ['admin', 'editor'];
+    const newRole = allowedRoles.includes(role || '') ? role! : 'editor';
+
+    const existingUser = await prisma.user.findUnique({
+      where: { email: normalizedUsername },
+      select: { id: true },
+    });
+
+    if (existingUser) {
+      return NextResponse.json({ error: 'Bu kullanıcı adı zaten alınmış.' }, { status: 400 });
     }
 
-    try {
-        const body = await request.json();
-        const { username, password, role } = body;
+    const hashedPassword = bcrypt.hashSync(password, 10);
+    const newUser = await prisma.user.create({
+      data: {
+        email: normalizedUsername,
+        name: normalizedUsername,
+        password: hashedPassword,
+        role: newRole,
+      },
+      select: { id: true, email: true, role: true, createdAt: true },
+    });
 
-        if (!username || !password) {
-            return NextResponse.json({ error: 'Kullanıcı adı ve şifre zorunludur.' }, { status: 400 });
-        }
-
-        const allowedRoles = ['admin', 'editor'];
-        const newRole = allowedRoles.includes(role) ? role : 'editor';
-
-        const users = getUsers();
-        if (users.some((u: any) => u.username === username)) {
-            return NextResponse.json({ error: 'Bu kullanıcı adı zaten alınmış.' }, { status: 400 });
-        }
-
-        const hashedPassword = bcrypt.hashSync(password, 10);
-
-        const newUser = {
-            id: crypto.randomUUID(),
-            username,
-            password: hashedPassword,
-            role: newRole,
-            createdAt: new Date().toISOString(),
-        };
-
-        users.push(newUser);
-        saveUsers(users);
-
-        return NextResponse.json({
-            success: true,
-            user: { id: newUser.id, username: newUser.username, role: newUser.role, createdAt: newUser.createdAt }
-        }, { status: 201 });
-    } catch {
-        return NextResponse.json({ error: 'Kullanıcı oluşturulurken hata oluştu.' }, { status: 500 });
-    }
+    return NextResponse.json(
+      {
+        success: true,
+        user: toSafeUser(newUser),
+      },
+      { status: 201 },
+    );
+  } catch (error) {
+    console.error('User create error:', error);
+    return NextResponse.json({ error: 'Kullanıcı oluşturulurken hata oluştu.' }, { status: 500 });
+  }
 }
 
 /**
- * DELETE /api/users — Delete a user (admin only)
+ * Bir kullanıcıyı sistemden kalıcı olarak silen DELETE metodu.
  */
 export async function DELETE(request: NextRequest) {
-    const currentUser = authenticate(request);
-    if (!currentUser) {
-        return NextResponse.json({ error: 'Yetkisiz erişim.' }, { status: 401 });
+  const session = await getSessionWithUser(request);
+  if (!session) {
+    return NextResponse.json({ error: 'Yetkisiz erişim.' }, { status: 401 });
+  }
+  if (session.user.role !== 'admin') {
+    return NextResponse.json({ error: 'Bu işlem için admin yetkisi gereklidir.' }, { status: 403 });
+  }
+
+  try {
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
+
+    if (!id) {
+      return NextResponse.json({ error: "Kullanıcı ID'si gereklidir." }, { status: 400 });
     }
-    if (currentUser.role !== 'admin') {
-        return NextResponse.json({ error: 'Bu işlem için admin yetkisi gereklidir.' }, { status: 403 });
+
+    if (session.user.id === id) {
+      return NextResponse.json({ error: 'Kendi hesabınızı silemezsiniz.' }, { status: 400 });
     }
 
-    try {
-        const { searchParams } = new URL(request.url);
-        const id = searchParams.get('id');
-
-        if (!id) {
-            return NextResponse.json({ error: "Kullanıcı ID'si gereklidir." }, { status: 400 });
-        }
-
-        const users = getUsers();
-        const userIndex = users.findIndex((u: any) => u.id === id);
-
-        if (userIndex === -1) {
-            return NextResponse.json({ error: 'Kullanıcı bulunamadı.' }, { status: 404 });
-        }
-
-        if (users[userIndex].username === currentUser.username) {
-            return NextResponse.json({ error: 'Kendi hesabınızı silemezsiniz.' }, { status: 400 });
-        }
-
-        users.splice(userIndex, 1);
-        saveUsers(users);
-
-        return NextResponse.json({ success: true }, { status: 200 });
-    } catch {
-        return NextResponse.json({ error: 'Kullanıcı silinirken hata oluştu.' }, { status: 500 });
+    const user = await prisma.user.findUnique({ where: { id }, select: { id: true } });
+    if (!user) {
+      return NextResponse.json({ error: 'Kullanıcı bulunamadı.' }, { status: 404 });
     }
+
+    await prisma.user.delete({ where: { id } });
+    return NextResponse.json({ success: true }, { status: 200 });
+  } catch (error) {
+    console.error('User delete error:', error);
+    return NextResponse.json({ error: 'Kullanıcı silinirken hata oluştu.' }, { status: 500 });
+  }
+}
+
+/**
+ * Kullanıcı bilgilerini veya şifresini güncelleyen PATCH metodu.
+ */
+export async function PATCH(request: NextRequest) {
+  const session = await getSessionWithUser(request);
+  if (!session) {
+    return NextResponse.json({ error: 'Yetkisiz erişim.' }, { status: 401 });
+  }
+  if (session.user.role !== 'admin') {
+    return NextResponse.json({ error: 'Bu işlem için admin yetkisi gereklidir.' }, { status: 403 });
+  }
+
+  try {
+    const body = await request.json();
+    const { id, username, password, role } = body as {
+      id: string;
+      username?: string;
+      password?: string;
+      role?: string;
+    };
+
+    if (!id) {
+      return NextResponse.json({ error: "Kullanıcı ID'si gereklidir." }, { status: 400 });
+    }
+
+    const existingUser = await prisma.user.findUnique({ where: { id } });
+    if (!existingUser) {
+      return NextResponse.json({ error: 'Kullanıcı bulunamadı.' }, { status: 404 });
+    }
+
+    const data: any = {};
+    if (username) {
+      const normalizedUsername = username.trim().toLowerCase();
+      // Başka birinin bu kullanıcı adını kullanıp kullanmadığını kontrol et
+      const usernameExists = await prisma.user.findFirst({
+        where: { email: normalizedUsername, NOT: { id } }
+      });
+      if (usernameExists) {
+        return NextResponse.json({ error: 'Bu kullanıcı adı zaten başka bir kullanıcı tarafından kullanılıyor.' }, { status: 400 });
+      }
+      data.email = normalizedUsername;
+      data.name = normalizedUsername;
+    }
+    
+    if (password) {
+      data.password = bcrypt.hashSync(password, 10);
+    }
+
+    if (role && (role === 'admin' || role === 'editor')) {
+      data.role = role;
+    }
+
+    const updatedUser = await prisma.user.update({
+      where: { id },
+      data,
+      select: { id: true, email: true, role: true, createdAt: true },
+    });
+
+    return NextResponse.json({
+      success: true,
+      user: toSafeUser(updatedUser)
+    }, { status: 200 });
+
+  } catch (error) {
+    console.error('User update error:', error);
+    return NextResponse.json({ error: 'Kullanıcı güncellenirken hata oluştu.' }, { status: 500 });
+  }
 }

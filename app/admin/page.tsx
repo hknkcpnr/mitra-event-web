@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useRef } from "react";
-import { Save, AlertCircle, CheckCircle, Loader2, LayoutDashboard, Type, Image as ImageIcon, Briefcase, Camera, Phone, ChevronDown, ChevronRight, MessageSquare, Edit3, Monitor, BarChart3, Users, Clock, Eye, Search, TrendingUp, TrendingDown, Upload, X, LogOut, Lock, User, Settings, KeyRound, Mail, CalendarDays, Plus, List, PieChart, Globe, Download, Trash2 } from "lucide-react";
+import { Save, AlertCircle, CheckCircle, Loader2, LayoutDashboard, Type, Image as ImageIcon, Briefcase, Camera, Phone, ChevronDown, ChevronRight, MessageSquare, Edit3, Monitor, BarChart3, Users, Clock, Eye, Search, TrendingUp, TrendingDown, Upload, X, LogOut, Lock, User, Settings, KeyRound, Mail, CalendarDays, Plus, List, PieChart, Globe, Download, Trash2, ShieldCheck, Shield } from "lucide-react";
 
 // Orijinal sayfa bilesenlerini ice aktar
 import HeroSection from '../components/HeroSection';
@@ -18,18 +18,54 @@ import { sectionConfig, statusConfig, InquiryCard, MiniBarChart, ImageUploadFiel
 import { DashboardStats } from './components/DashboardStats';
 
 
+/**
+ * Yönetici Paneli Ana Bileşeni
+ * Tüm içerik yönetimi, kullanıcı yönetimi, takvim ve istatistikleri barındırır.
+ */
 export default function AdminPage() {
     const [content, setContent] = useState<any>(null);
     const [stats, setStats] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
     const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
-    const [activeSection, setActiveSection] = useState<string | null>('stats');
+    const [isDirty, setIsDirty] = useState(false);
+
+    // Dizin isimleri eslestirme (URL Hash için Turkce)
+    const TR_HASH_MAP: Record<string, string> = {
+        'stats': 'ozet',
+        'inquiries': 'basvurular',
+        'media_library': 'medya',
+        'events': 'takvim',
+        'kasa': 'kasa',
+        'system_users': 'kullanicilar',
+        'system_sessions': 'oturumlar',
+        'system_meta': 'seo',
+        'system_settings': 'ayarlar',
+        'hero': 'banner',
+        'brand': 'marka',
+        'philosophy': 'felsefe',
+        'services': 'hizmetler',
+        'testimonials': 'yorumlar',
+        'projects': 'projeler',
+        'gallery': 'galeri',
+        'contact': 'iletisim',
+        'footer': 'footer'
+    };
+    const INV_HASH_MAP = Object.fromEntries(Object.entries(TR_HASH_MAP).map(([k, v]) => [v, k]));
+
+    const [activeSection, setActiveSection] = useState<string | null>(() => {
+        if (typeof window !== 'undefined') {
+            const hash = window.location.hash.replace('#', '');
+            return INV_HASH_MAP[hash] || hash || 'stats';
+        }
+        return 'stats';
+    });
 
     // Yan menu durumu
-    const [isSectionsOpen, setIsSectionsOpen] = useState(true);
+    const [isSectionsOpen, setIsSectionsOpen] = useState(false);
     const [isStatsOpen, setIsStatsOpen] = useState(false);
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+    const [userSubTab, setUserSubTab] = useState<'users' | 'account'>('users');
     const [showGalleryPicker, setShowGalleryPicker] = useState(false);
 
     // Kimlik dogrulama durumu
@@ -53,11 +89,14 @@ export default function AdminPage() {
     const [users, setUsers] = useState<any[]>([]);
     const [sessionLogs, setSessionLogs] = useState<any[]>([]);
     const [newUserForm, setNewUserForm] = useState({ username: '', password: '', role: 'editor' });
+    const [editingUser, setEditingUser] = useState<any | null>(null);
+    const [editUserForm, setEditUserForm] = useState({ username: '', password: '', role: 'editor' });
     const [systemMessage, setSystemMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
     const [inquiries, setInquiries] = useState<any[]>([]);
     const [isInquiriesLoading, setIsInquiriesLoading] = useState(false);
     const [inquirySearch, setInquirySearch] = useState('');
     const [inquiryFilter, setInquiryFilter] = useState('all');
+    const [inquiryTypeFilter, setInquiryTypeFilter] = useState<'unread' | 'read'>('unread');
 
     // Genel Bakis Panosu Durumu
     const [overviewPeriod, setOverviewPeriod] = useState<'aylik' | 'yillik'>('aylik');
@@ -72,11 +111,35 @@ export default function AdminPage() {
     const [eventForm, setEventForm] = useState({
         title: '', date: '', description: '',
         eventType: 'düğün',
-        firstName: '', lastName: '', phone: '', price: '',
+        firstName: '', lastName: '', phone: '', price: '', deposit: '',
         paymentStatus: 'beklemede', reminderDays: '0'
     });
     const [reportMonth, setReportMonth] = useState(new Date().getMonth());
     const [reportYear, setReportYear] = useState(new Date().getFullYear());
+    const [kasaYear, setKasaYear] = useState(new Date().getFullYear());
+    const [kasaMonth, setKasaMonth] = useState<number | 'all'>(new Date().getMonth());
+    const [kasaEditingId, setKasaEditingId] = useState<string | null>(null);
+    const [kasaEditForm, setKasaEditForm] = useState({ price: '', deposit: '', paymentStatus: '' });
+    const [kasaDeletingId, setKasaDeletingId] = useState<string | null>(null);
+    const [inquiryDeletingId, setInquiryDeletingId] = useState<string | null>(null);
+
+    // URL hash ile aktif bölümü senkronize et
+    useEffect(() => {
+        if (activeSection) {
+            const trHash = TR_HASH_MAP[activeSection] || activeSection;
+            window.location.hash = trHash;
+        }
+    }, [activeSection]);
+
+    useEffect(() => {
+        const handleHashChange = () => {
+            const hash = window.location.hash.replace('#', '');
+            const internalKey = INV_HASH_MAP[hash] || hash;
+            if (internalKey) setActiveSection(internalKey);
+        };
+        window.addEventListener('hashchange', handleHashChange);
+        return () => window.removeEventListener('hashchange', handleHashChange);
+    }, []);
 
     // Sayfa yuklendiginde oturumu kontrol et
     useEffect(() => {
@@ -115,6 +178,21 @@ export default function AdminPage() {
                 if (!contentRes.ok) throw new Error('İçerik çekilemedi');
 
                 const contentData = await contentRes.json();
+                
+                // Varsayilan sistem ayarlarini kontrol et
+                const defaultSettings = {
+                    maxImageSize: '10',
+                    sessionLogLimit: '10',
+                    maxGalleryImages: '30',
+                    allowedImageFormats: '.jpg,.jpeg,.png,.webp,.gif',
+                    maintenanceMode: 'false'
+                };
+
+                contentData.systemSettings = {
+                    ...defaultSettings,
+                    ...(contentData.systemSettings || {})
+                };
+                
                 setContent(contentData);
 
                 if (statsRes.ok) {
@@ -155,6 +233,9 @@ export default function AdminPage() {
         fetchData();
     }, [isAuthenticated]);
 
+    /**
+     * Kullanıcı girişi işlemini yönetir
+     */
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoggingIn(true);
@@ -181,6 +262,9 @@ export default function AdminPage() {
         }
     };
 
+    /**
+     * Oturumu sonlandırır ve tüm eyaletleri sıfırlar
+     */
     const handleLogout = async () => {
         try {
             await fetch('/api/auth', { method: 'DELETE' });
@@ -193,6 +277,9 @@ export default function AdminPage() {
         setIsLoading(true);
     };
 
+    /**
+     * Aktif kullanıcının bilgilerini (kullanıcı adı/şifre) günceller
+     */
     const handleUpdateAuth = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsUpdating(true);
@@ -222,6 +309,9 @@ export default function AdminPage() {
         }
     };
 
+    /**
+     * Yapılan tüm içerik değişikliklerini veritabanına kaydeder
+     */
     const handleSave = async () => {
         setIsSaving(true);
         try {
@@ -232,6 +322,7 @@ export default function AdminPage() {
             });
             if (res.ok) {
                 setMessage({ type: 'success', text: 'Tüm değişiklikler başarıyla kaydedildi!' });
+                setIsDirty(false);
                 setTimeout(() => setMessage(null), 3000);
             } else {
                 setMessage({ type: 'error', text: 'Kaydedilirken bir hata oluştu.' });
@@ -243,6 +334,9 @@ export default function AdminPage() {
         }
     };
 
+    /**
+     * Yeni bir sistem kullanıcısı oluşturur (Sadece Admin)
+     */
     const handleCreateUser = async (e: React.FormEvent) => {
         e.preventDefault();
         setSystemMessage(null);
@@ -265,6 +359,9 @@ export default function AdminPage() {
         }
     };
 
+    /**
+     * Mevcut bir sistem kullanıcısını siler
+     */
     const handleDeleteUser = async (id: string) => {
         if (!confirm('Bu kullanıcıyı silmek istediğinize emin misiniz?')) return;
         setSystemMessage(null);
@@ -282,18 +379,60 @@ export default function AdminPage() {
         }
     };
 
+    /**
+     * Mevcut bir sistem kullanıcısının bilgilerini günceller
+     */
+    const handleUpdateUser = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!editingUser) return;
+        setSystemMessage(null);
+        try {
+            const res = await fetch('/api/users', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    id: editingUser.id,
+                    username: editUserForm.username,
+                    password: editUserForm.password || undefined,
+                    role: editUserForm.role
+                })
+            });
+            const data = await res.json();
+            if (res.ok) {
+                setUsers(users.map(u => u.id === editingUser.id ? data.user : u));
+                setEditingUser(null);
+                setSystemMessage({ type: 'success', text: 'Kullanıcı bilgileri güncellendi.' });
+            } else {
+                setSystemMessage({ type: 'error', text: data.error || 'Güncelleme hatası' });
+            }
+        } catch {
+            setSystemMessage({ type: 'error', text: 'Bağlantı hatası' });
+        }
+    };
+
+    /**
+     * İçerik objesi içindeki belirli bir yolu (path) günceller
+     * Eksik ara objeleri otomatik oluşturur.
+     */
     const handleChange = (path: (string | number)[], value: any) => {
         setContent((prevContent: any) => {
             const newContent = JSON.parse(JSON.stringify(prevContent));
             let current = newContent;
             for (let i = 0; i < path.length - 1; i++) {
+                if (current[path[i]] === undefined || current[path[i]] === null) {
+                    current[path[i]] = {};
+                }
                 current = current[path[i]];
             }
             current[path[path.length - 1]] = value;
+            setIsDirty(true);
             return newContent;
         });
     };
 
+    /**
+     * İçerik içindeki bir diziye (array) yeni bir eleman ekler
+     */
     const handleAddItem = (path: (string | number)[], defaultValue: any) => {
         setContent((prevContent: any) => {
             const newContent = JSON.parse(JSON.stringify(prevContent));
@@ -303,11 +442,15 @@ export default function AdminPage() {
             }
             if (Array.isArray(current)) {
                 current.push(defaultValue);
+                setIsDirty(true);
             }
             return newContent;
         });
     };
 
+    /**
+     * İçerik içindeki bir diziden belirtilen indisteki elemanı siler
+     */
     const handleRemoveItem = (path: (string | number)[], index: number) => {
         setContent((prevContent: any) => {
             const newContent = JSON.parse(JSON.stringify(prevContent));
@@ -317,6 +460,7 @@ export default function AdminPage() {
             }
             if (Array.isArray(current)) {
                 current.splice(index, 1);
+                setIsDirty(true);
             }
             return newContent;
         });
@@ -337,6 +481,9 @@ export default function AdminPage() {
 
     /**
      * Ozyinelemeli (Recursive) form olusturucu
+     */
+    /**
+     * Verilen veri objesini özyinelemeli olarak form alanlarına dönüştürür
      */
     const renderFields = (data: any, path: (string | number)[] = []): React.ReactElement[] => {
         return Object.keys(data).map((key) => {
@@ -517,6 +664,8 @@ export default function AdminPage() {
                         value={value}
                         onChange={(newPath) => handleChange(currentPath, newPath)}
                         label={getLabel(key)}
+                        maxSizeMB={parseInt(content?.systemSettings?.maxImageSize || '10')}
+                        allowedFormats={content?.systemSettings?.allowedImageFormats || '.jpg,.jpeg,.png,.webp'}
                     />
                 );
             }
@@ -552,6 +701,9 @@ export default function AdminPage() {
 
     /**
      * Etkinlikleri Olustur (Takvim ve Liste)
+     */
+    /**
+     * Organizasyon yönetimi sayfasını (Takvim ve Liste) oluşturur
      */
     const renderEvents = () => {
         const daysInMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0).getDate();
@@ -607,21 +759,31 @@ export default function AdminPage() {
         };
 
         const downloadEventsExcel = () => {
-            const headers = ["ID", "Etkinlik", "Tür", "Tarih", "Mekan", "Fiyat", "Kapora", "Müşteri", "Telefon", "Ödeme Durumu"];
+            const headers = ["ID", "Etkinlik", "Tür", "Tarih", "Müşteri Adı", "Müşteri Soyadı", "Telefon", "Fiyat", "Ödeme Durumu", "Oluşturulma Tarihi"];
             const rows = events.map(ev => [
                 ev.id,
-                ev.title,
-                ev.eventType,
-                new Date(ev.date).toLocaleDateString('tr-TR'),
-                ev.location || '',
+                ev.title || '',
+                ev.eventType || 'Diğer',
+                ev.date ? new Date(ev.date).toLocaleDateString('tr-TR') : '',
+                ev.firstName || '',
+                ev.lastName || '',
+                ev.phone || '',
                 ev.price || 0,
-                ev.deposit || 0,
-                ev.clientName || '',
-                ev.clientPhone || '',
-                ev.paymentStatus === 'alindi' ? 'Tamamı Alındı' : ev.paymentStatus === 'isimolasi' ? 'Kapora Alındı' : 'Beklemede'
+                ev.paymentStatus === 'alindi' ? 'Tamamı Alındı' : ev.paymentStatus === 'isimolasi' ? 'Kapora İçerir' : 'Beklemede',
+                ev.createdAt ? new Date(ev.createdAt).toLocaleDateString('tr-TR') : ''
             ]);
 
-            const csvContent = [headers, ...rows].map(e => e.join(";")).join("\n");
+            const escapeCSV = (value: any) => {
+                const str = String(value ?? '');
+                if (str.includes(';') || str.includes('"') || str.includes('\n')) {
+                    return `"${str.replace(/"/g, '""')}"`;
+                }
+                return str;
+            };
+
+            const csvDataRows = [headers, ...rows].map(e => e.map(escapeCSV).join(";")).join("\n");
+            const csvContent = "sep=;\n" + csvDataRows;
+
             const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
             const url = URL.createObjectURL(blob);
             const link = document.createElement("a");
@@ -743,7 +905,7 @@ export default function AdminPage() {
                                                 setEventForm({
                                                     title: '', date: dateStr, description: '',
                                                     eventType: content?.contact?.eventTypes?.[0]?.toLowerCase() || 'düğün',
-                                                    firstName: '', lastName: '', phone: '', price: '',
+                                                    firstName: '', lastName: '', phone: '', price: '', deposit: '',
                                                     paymentStatus: 'beklemede', reminderDays: '0'
                                                 });
                                                 setIsEventModalOpen(true);
@@ -772,16 +934,30 @@ export default function AdminPage() {
                                                                 setEventForm({ ...ev, reminderDays: ev.reminderDays.toString() });
                                                                 setIsEventModalOpen(true);
                                                             }}
-                                                            className={`relative group/event px-2.5 py-1.5 bg-white border border-gray-100 rounded-xl text-xs shadow-[0_2px_8px_-4px_rgba(0,0,0,0.1)] hover:shadow-md hover:border-gray-200 transition-all overflow-hidden`}
+                                                            className={`relative group/event px-2 py-1.5 ${style.bg} ${style.border} border rounded-lg text-xs shadow-sm shadow-[${style.hex}20] hover:shadow-md transition-all overflow-hidden flex flex-col cursor-pointer hover:scale-[1.02] duration-200`}
                                                         >
-                                                            <div className={`absolute left-0 top-0 bottom-0 w-1 ${style.dot}`} />
-                                                            <div className="flex items-center justify-between gap-1 pl-1">
-                                                                <span className="truncate font-bold text-gray-700 group-hover/event:text-gray-900 transition-colors">{ev.title}</span>
+                                                            <div className="flex items-center justify-between gap-1 mb-0.5">
+                                                                <span className={`truncate font-bold ${style.text}`}>{ev.title || 'İsimsiz'}</span>
+                                                                {ev.paymentStatus === 'alindi' && (
+                                                                    <span className="w-1.5 h-1.5 rounded-full bg-green-500 flex-shrink-0" title="Ödeme Alındı" />
+                                                                )}
                                                             </div>
-                                                            <div className="flex justify-between items-center pl-1 mt-0.5 opacity-80">
-                                                                <span className={`text-[9px] font-black uppercase tracking-wider ${style.text}`}>{ev.eventType}</span>
-                                                                {ev.price && <span className="font-black text-[10px] text-gray-500 flex-shrink-0">{ev.price}₺</span>}
+                                                            <div className="flex justify-between items-center opacity-90">
+                                                                <span className={`text-[8px] font-black uppercase tracking-widest ${style.text} bg-white/60 px-1.5 py-0.5 rounded-md backdrop-blur-sm border border-white/40`}>
+                                                                    {ev.eventType}
+                                                                </span>
+                                                                <span className={`font-bold text-[9px] ${style.text} bg-white/40 px-1 rounded-md`}>
+                                                                    {ev.firstName}
+                                                                </span>
                                                             </div>
+                                                            {ev.price && (
+                                                                <div className="mt-1 flex justify-between items-center text-[8px] font-bold opacity-80">
+                                                                    <span className={style.text}>Kalan:</span>
+                                                                    <span className={style.text}>
+                                                                        {Number(ev.price) - Number(ev.deposit || 0)} ₺
+                                                                    </span>
+                                                                </div>
+                                                            )}
                                                         </div>
                                                     );
                                                 })}
@@ -809,6 +985,8 @@ export default function AdminPage() {
                                     <th className="px-6 py-4">Tür</th>
                                     <th className="px-6 py-4">Müşteri</th>
                                     <th className="px-6 py-4">İletişim</th>
+                                    <th className="px-6 py-4 text-right">Fiyat</th>
+                                    <th className="px-6 py-4 text-right">Kalan</th>
                                     <th className="px-6 py-4">Durum</th>
                                     <th className="px-6 py-4 text-right">İşlem</th>
                                 </tr>
@@ -827,6 +1005,10 @@ export default function AdminPage() {
                                         </td>
                                         <td className="px-6 py-4 text-[#2D2926]">{ev.firstName} {ev.lastName}</td>
                                         <td className="px-6 py-4">{ev.phone}</td>
+                                        <td className="px-6 py-4 text-right font-medium text-gray-500">{ev.price || 0} ₺</td>
+                                        <td className="px-6 py-4 text-right font-bold text-orange-600">
+                                            {Number(ev.price || 0) - Number(ev.deposit || 0)} ₺
+                                        </td>
                                         <td className="px-6 py-4">
                                             <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider ${ev.paymentStatus === 'alindi' ? 'bg-green-100 text-green-700' :
                                                 ev.paymentStatus === 'isimolasi' ? 'bg-amber-100 text-amber-700' :
@@ -1084,8 +1266,22 @@ export default function AdminPage() {
                                                     <input type="tel" required value={eventForm.phone} onChange={e => setEventForm({ ...eventForm, phone: e.target.value })} placeholder="+90 5XX XXX XX XX" className="w-full px-4 py-3 border border-gray-200 rounded-lg text-sm focus:border-orange-500 outline-none" />
                                                 </div>
                                                 <div className="col-span-1">
-                                                    <label className="block text-[11px] font-bold text-gray-500 mb-2 uppercase tracking-wider">Alınan Ücret (₺)</label>
+                                                    <label className="block text-[11px] font-bold text-gray-500 mb-2 uppercase tracking-wider">Toplam Ücret (₺)</label>
                                                     <input type="number" min="0" required value={eventForm.price} onChange={e => setEventForm({ ...eventForm, price: e.target.value })} placeholder="0" className="w-full px-4 py-3 border border-gray-200 rounded-lg text-sm focus:border-orange-500 outline-none" />
+                                                </div>
+                                                {eventForm.paymentStatus === 'isimolasi' && (
+                                                    <div className="col-span-1 animate-in slide-in-from-left-2 duration-300">
+                                                        <label className="block text-[11px] font-bold text-amber-600 mb-2 uppercase tracking-wider">Alınan Kapora (₺)</label>
+                                                        <input type="number" min="0" value={eventForm.deposit} onChange={e => setEventForm({ ...eventForm, deposit: e.target.value })} placeholder="Alınan miktar..." className="w-full px-4 py-3 border border-amber-200 bg-amber-50 rounded-lg text-sm focus:border-amber-500 outline-none" />
+                                                    </div>
+                                                )}
+                                                <div className="col-span-full pt-2">
+                                                    <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-100">
+                                                        <div className="text-xs font-bold text-gray-400 uppercase tracking-widest">Kalan Ödeme</div>
+                                                        <div className="text-xl font-black text-[#2D2926]">
+                                                            {Number(eventForm.price || 0) - Number(eventForm.deposit || 0)} ₺
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
@@ -1149,7 +1345,403 @@ export default function AdminPage() {
      * Renders User Management
      */
     /**
+     * Renders Kasa (Cashbox) section
+     */
+    const handleDeleteKasaEvent = async (id: string) => {
+        try {
+            const res = await fetch(`/api/events?id=${id}`, { method: 'DELETE' });
+            if (res.ok) {
+                setEvents(prev => prev.filter(e => e.id !== id));
+                setKasaDeletingId(null);
+                setMessage({ type: 'success', text: 'Organizasyon başarıyla silindi.' });
+                setTimeout(() => setMessage(null), 3000);
+            } else {
+                const data = await res.json();
+                setMessage({ type: 'error', text: data.error || 'Silme işlemi başarısız oldu.' });
+            }
+        } catch {
+            setMessage({ type: 'error', text: 'Bağlantı hatası. Silinemedi.' });
+        }
+    };
+
+    const handleOpenKasaEdit = (ev: any) => {
+        setKasaEditingId(ev.id);
+        setKasaEditForm({
+            price: ev.price || '',
+            deposit: ev.deposit || '',
+            paymentStatus: ev.paymentStatus || 'beklemede',
+        });
+    };
+
+    const handleSaveKasaEdit = async () => {
+        if (!kasaEditingId) return;
+        try {
+            const res = await fetch('/api/events', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    id: kasaEditingId,
+                    price: kasaEditForm.price,
+                    deposit: kasaEditForm.deposit,
+                    paymentStatus: kasaEditForm.paymentStatus,
+                }),
+            });
+            const data = await res.json();
+            if (res.ok) {
+                setEvents(prev => prev.map(e => e.id === kasaEditingId ? data.event : e));
+                setKasaEditingId(null);
+                setMessage({ type: 'success', text: 'Ödeme bilgileri güncellendi.' });
+                setTimeout(() => setMessage(null), 3000);
+            } else {
+                setMessage({ type: 'error', text: data.error || 'Güncelleme başarısız oldu.' });
+            }
+        } catch {
+            setMessage({ type: 'error', text: 'Bağlantı hatası.' });
+        }
+    };
+
+    const renderKasa = () => {
+        const parsePrice = (val: any) => {
+            if (!val) return 0;
+            if (typeof val === 'number') return val;
+            const cleaned = val.toString().replace(/\./g, '').replace(/,/g, '.');
+            const num = parseFloat(cleaned);
+            return isNaN(num) ? 0 : num;
+        };
+
+        const isAdmin = userRole === 'admin';
+
+        const filteredKasa = events.filter(ev => {
+            if (!ev.date) return false;
+            const d = new Date(ev.date);
+            if (isNaN(d.getTime())) return false;
+            const matchesYear = d.getFullYear() === kasaYear;
+            const matchesMonth = kasaMonth === 'all' || d.getMonth() === kasaMonth;
+            return matchesYear && matchesMonth;
+        }).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+        const totalEarned = filteredKasa.reduce((acc, ev) => {
+            const p = parsePrice(ev.price);
+            const d = parsePrice(ev.deposit);
+            const isPaid = ev.paymentStatus === 'alindi';
+            return acc + d + (isPaid ? (p - d) : 0);
+        }, 0);
+
+        const totalRemaining = filteredKasa.reduce((acc, ev) => {
+            const p = parsePrice(ev.price);
+            const d = parsePrice(ev.deposit);
+            const isPaid = ev.paymentStatus === 'alindi';
+            return acc + (isPaid ? 0 : (p - d));
+        }, 0);
+
+        const grandTotal = filteredKasa.reduce((acc, ev) => acc + parsePrice(ev.price), 0);
+
+        const monthNames = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
+
+        return (
+            <div className="w-full max-w-6xl mx-auto space-y-6 mt-6 pb-24">
+                {/* Header & Filters */}
+                <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                    <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center shadow-inner">
+                            <TrendingUp size={28} />
+                        </div>
+                        <div>
+                            <h2 className="text-2xl font-serif text-[#2D2926]">Kasa & Finansal Takip</h2>
+                            <p className="text-sm text-gray-400 mt-1">Organizasyon bazlı kazanç ve alacak tablosu.</p>
+                        </div>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                        <div className="flex bg-gray-50 border border-gray-100 rounded-xl p-1 shadow-sm">
+                            <select
+                                value={kasaMonth}
+                                onChange={(e) => setKasaMonth(e.target.value === 'all' ? 'all' : Number(e.target.value))}
+                                className="px-3 py-2 bg-transparent text-sm font-bold text-gray-700 outline-none cursor-pointer"
+                            >
+                                <option value="all">Tüm Aylar</option>
+                                {monthNames.map((m, i) => <option key={i} value={i}>{m}</option>)}
+                            </select>
+                            <div className="w-px bg-gray-200 my-2 mx-1"></div>
+                            <select
+                                value={kasaYear}
+                                onChange={(e) => setKasaYear(Number(e.target.value))}
+                                className="px-3 py-2 bg-transparent text-sm font-bold text-gray-700 outline-none cursor-pointer"
+                            >
+                                {[...Array(5)].map((_, i) => {
+                                    const y = new Date().getFullYear() - 2 + i;
+                                    return <option key={y} value={y}>{y}</option>;
+                                })}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Main Table */}
+                <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left text-sm">
+                            <thead>
+                                <tr className="bg-gray-50/50 border-b border-gray-100">
+                                    <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-gray-400">Tarih</th>
+                                    <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-gray-400">Organizasyon</th>
+                                    <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-gray-400">Tür</th>
+                                    <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-gray-400 text-right">Toplam</th>
+                                    <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-gray-400 text-right">Alınan</th>
+                                    <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-gray-400 text-right">Kalan</th>
+                                    <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-gray-400">Durum</th>
+                                    {isAdmin && <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-gray-400 text-right">İşlem</th>}
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-50">
+                                {filteredKasa.map(ev => {
+                                    const price = parsePrice(ev.price);
+                                    const deposit = parsePrice(ev.deposit);
+                                    const remaining = price - deposit;
+                                    const isPaid = ev.paymentStatus === 'alindi';
+                                    const style = getEventStyle(ev.eventType || 'diğer');
+                                    const eventDate = new Date(ev.date);
+
+                                    return (
+                                        <tr key={ev.id} className="hover:bg-gray-50/30 transition-colors group">
+                                            <td className="px-6 py-4 whitespace-nowrap font-bold text-gray-500">
+                                                {!isNaN(eventDate.getTime()) 
+                                                    ? eventDate.toLocaleDateString('tr-TR', { day: '2-digit', month: 'short' })
+                                                    : '---'}
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="font-bold text-[#2D2926]">{ev.title}</div>
+                                                <div className="text-[10px] text-gray-400 flex items-center gap-1">
+                                                    <User size={10} /> {ev.firstName} {ev.lastName}
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <span className={`px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-tight ${style.bg} ${style.text} border ${style.border}`}>
+                                                    {ev.eventType}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4 text-right font-black text-gray-700">{price.toLocaleString('tr-TR')} ₺</td>
+                                            <td className="px-6 py-4 text-right font-bold text-emerald-600">{(isPaid ? price : deposit).toLocaleString('tr-TR')} ₺</td>
+                                            <td className="px-6 py-4 text-right font-black text-orange-600">{(isPaid ? 0 : remaining).toLocaleString('tr-TR')} ₺</td>
+                                            <td className="px-6 py-4">
+                                                <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest ${
+                                                    ev.paymentStatus === 'alindi' ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' :
+                                                    ev.paymentStatus === 'isimolasi' ? 'bg-amber-50 text-amber-700 border border-amber-100' :
+                                                    'bg-gray-50 text-gray-500 border border-gray-100'
+                                                }`}>
+                                                    <div className={`w-1.5 h-1.5 rounded-full ${
+                                                        ev.paymentStatus === 'alindi' ? 'bg-emerald-500' :
+                                                        ev.paymentStatus === 'isimolasi' ? 'bg-amber-400' :
+                                                        'bg-gray-400'
+                                                    }`} />
+                                                    {ev.paymentStatus === 'alindi' ? 'Tamamı Alındı' : ev.paymentStatus === 'isimolasi' ? 'Kapora' : 'Beklemede'}
+                                                </div>
+                                            </td>
+                                            {isAdmin && (
+                                                <td className="px-6 py-4 text-right">
+                                                    <div className="flex items-center justify-end gap-1">
+                                                        <button
+                                                            onClick={() => handleOpenKasaEdit(ev)}
+                                                            className="p-2 rounded-lg text-gray-400 hover:text-orange-600 hover:bg-orange-50 transition-all duration-200"
+                                                            title="Ödeme Bilgilerini Düzenle"
+                                                        >
+                                                            <Edit3 size={15} />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => setKasaDeletingId(ev.id)}
+                                                            className="p-2 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-all duration-200"
+                                                            title="İşlemi Sil / İptal Et"
+                                                        >
+                                                            <Trash2 size={15} />
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            )}
+                                        </tr>
+                                    );
+                                })}
+                                {filteredKasa.length === 0 && (
+                                    <tr>
+                                        <td colSpan={isAdmin ? 8 : 7} className="px-6 py-20 text-center text-gray-400 italic font-serif">
+                                            Bu dönemde herhangi bir mali kayıt bulunamadı.
+                                        </td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                {/* Summary Section */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="bg-emerald-600 p-8 rounded-[2.5rem] text-white shadow-xl shadow-emerald-200/40 relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-2xl group-hover:scale-110 transition-transform"></div>
+                        <p className="text-[11px] font-black uppercase tracking-[0.2em] opacity-80 mb-2">Kasaya Giren Toplam</p>
+                        <p className="text-4xl font-serif">{totalEarned.toLocaleString('tr-TR')} ₺</p>
+                        <div className="mt-4 flex items-center gap-2 text-emerald-200">
+                            <CheckCircle size={14} />
+                            <span className="text-[10px] font-bold uppercase tracking-wider">Tahsil Edilen Tutar</span>
+                        </div>
+                    </div>
+
+                    <div className="bg-orange-600 p-8 rounded-[2.5rem] text-white shadow-xl shadow-orange-200/40 relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-2xl group-hover:scale-110 transition-transform"></div>
+                        <p className="text-[11px] font-black uppercase tracking-[0.2em] opacity-80 mb-2">Bekleyen (Alacak)</p>
+                        <p className="text-4xl font-serif">{totalRemaining.toLocaleString('tr-TR')} ₺</p>
+                        <div className="mt-4 flex items-center gap-2 text-orange-200">
+                            <Clock size={14} />
+                            <span className="text-[10px] font-bold uppercase tracking-wider">Henüz Alınmamış Ödemeler</span>
+                        </div>
+                    </div>
+
+                    <div className="bg-[#2D2926] p-8 rounded-[2.5rem] text-white shadow-xl shadow-stone-200/40 relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -mr-16 -mt-16 blur-2xl group-hover:scale-110 transition-transform"></div>
+                        <p className="text-[11px] font-black uppercase tracking-[0.2em] opacity-80 mb-2">Genel Brüt Hacim</p>
+                        <p className="text-4xl font-serif">{grandTotal.toLocaleString('tr-TR')} ₺</p>
+                        <div className="mt-4 flex items-center gap-2 text-gray-400">
+                            <TrendingUp size={14} />
+                            <span className="text-[10px] font-bold uppercase tracking-wider">Toplam İş Bedeli</span>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Kasa Edit Modal */}
+                {kasaEditingId && isAdmin && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm">
+                        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                            <div className="flex items-center justify-between p-6 border-b border-gray-100 bg-gray-50/50">
+                                <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                                    <Edit3 className="text-orange-500" size={20} />
+                                    Ödeme Bilgilerini Düzenle
+                                </h3>
+                                <button onClick={() => setKasaEditingId(null)} className="text-gray-400 hover:text-orange-600 bg-white p-2 border border-gray-200 rounded-lg shadow-sm">
+                                    <X size={18} />
+                                </button>
+                            </div>
+
+                            <div className="p-6 space-y-5">
+                                <div>
+                                    <label className="block text-[11px] font-bold text-gray-500 mb-2 uppercase tracking-wider">Toplam Ücret (₺)</label>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        value={kasaEditForm.price}
+                                        onChange={e => setKasaEditForm({ ...kasaEditForm, price: e.target.value })}
+                                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:border-orange-500 outline-none focus:bg-white transition-all font-medium"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-[11px] font-bold text-gray-500 mb-2 uppercase tracking-wider">Alınan Kapora (₺)</label>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        value={kasaEditForm.deposit}
+                                        onChange={e => setKasaEditForm({ ...kasaEditForm, deposit: e.target.value })}
+                                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:border-orange-500 outline-none focus:bg-white transition-all font-medium"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-[11px] font-bold text-gray-500 mb-2 uppercase tracking-wider">Ödeme Durumu</label>
+                                    <div className="grid grid-cols-3 gap-3">
+                                        {[
+                                            { val: 'beklemede', label: 'Beklemede', dotColor: 'bg-gray-400' },
+                                            { val: 'isimolasi', label: 'Kapora', dotColor: 'bg-amber-400' },
+                                            { val: 'alindi', label: 'Tamamı Alındı', dotColor: 'bg-emerald-500' },
+                                        ].map(o => (
+                                            <label
+                                                key={o.val}
+                                                className={`cursor-pointer border rounded-xl p-3 flex flex-col items-center justify-center gap-2 transition-all text-center ${
+                                                    kasaEditForm.paymentStatus === o.val
+                                                        ? 'border-orange-500 bg-orange-50 shadow-sm ring-1 ring-orange-500'
+                                                        : 'border-gray-200 hover:border-orange-300'
+                                                }`}
+                                            >
+                                                <input
+                                                    type="radio"
+                                                    name="kasaPaymentStatus"
+                                                    value={o.val}
+                                                    checked={kasaEditForm.paymentStatus === o.val}
+                                                    onChange={e => setKasaEditForm({ ...kasaEditForm, paymentStatus: e.target.value })}
+                                                    className="sr-only"
+                                                />
+                                                <div className={`w-2 h-2 rounded-full ${o.dotColor}`} />
+                                                <span className="text-xs font-bold text-gray-700">{o.label}</span>
+                                            </label>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div className="p-4 bg-gray-50 rounded-xl border border-gray-100">
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">Kalan Ödeme</span>
+                                        <span className="text-xl font-black text-[#2D2926]">
+                                            {(Number(kasaEditForm.price || 0) - Number(kasaEditForm.deposit || 0)).toLocaleString('tr-TR')} ₺
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="p-6 border-t border-gray-100 bg-gray-50/50 flex items-center justify-end gap-3">
+                                <button
+                                    onClick={() => setKasaEditingId(null)}
+                                    className="px-5 py-2.5 bg-white border border-gray-200 text-gray-600 rounded-lg hover:bg-gray-50 transition-colors text-sm font-bold"
+                                >
+                                    İptal
+                                </button>
+                                <button
+                                    onClick={handleSaveKasaEdit}
+                                    className="px-5 py-2.5 bg-orange-600 text-white rounded-lg shadow-md hover:bg-orange-700 transition-colors text-sm font-bold flex items-center gap-2"
+                                >
+                                    <Save size={16} />
+                                    Kaydet
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Kasa Delete Confirmation Modal */}
+                {kasaDeletingId && isAdmin && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm">
+                        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                            <div className="p-6 text-center">
+                                <div className="w-16 h-16 rounded-full bg-red-50 flex items-center justify-center mx-auto mb-4">
+                                    <Trash2 size={28} className="text-red-500" />
+                                </div>
+                                <h3 className="text-lg font-bold text-gray-900 mb-2">İşlemi Sil</h3>
+                                <p className="text-sm text-gray-500">
+                                    Bu organizasyonu silmek istediğinize emin misiniz? Bu işlem geri alınamaz.
+                                </p>
+                            </div>
+                            <div className="px-6 pb-6 flex items-center justify-center gap-3">
+                                <button
+                                    onClick={() => setKasaDeletingId(null)}
+                                    className="px-6 py-2.5 bg-white border border-gray-200 text-gray-600 rounded-lg hover:bg-gray-50 transition-colors text-sm font-bold flex-1"
+                                >
+                                    Vazgeç
+                                </button>
+                                <button
+                                    onClick={() => handleDeleteKasaEvent(kasaDeletingId)}
+                                    className="px-6 py-2.5 bg-red-600 text-white rounded-lg shadow-md hover:bg-red-700 transition-colors text-sm font-bold flex items-center justify-center gap-2 flex-1"
+                                >
+                                    <Trash2 size={16} />
+                                    Evet, Sil
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+            </div>
+        );
+    };
+
+    /**
      * Renders User Management
+     */
+    /**
+     * Kullanıcı yönetimi ve profil ayarları sayfasını oluşturur
      */
     const renderUserManagement = () => {
         const adminCount = users.filter(u => u.role === 'admin').length;
@@ -1157,27 +1749,46 @@ export default function AdminPage() {
 
         return (
             <div className="w-full max-w-5xl mx-auto py-8 px-4 space-y-8">
-                {/* Header Section */}
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white p-8 rounded-3xl shadow-sm border border-orange-100/50">
-                    <div>
-                        <h2 className="text-3xl font-serif text-[#2D2926] flex items-center gap-4">
-                            <div className="w-12 h-12 rounded-2xl bg-orange-50 flex items-center justify-center text-orange-500 shadow-inner">
-                                <Users size={28} />
+                {/* Header & Tab Navigation */}
+                <div className="bg-white rounded-[3rem] shadow-xl shadow-stone-100/40 border border-gray-100 overflow-hidden">
+                    <div className="p-10 flex flex-col md:flex-row md:items-center justify-between gap-8 relative">
+                        <div className="absolute top-0 left-0 w-2 bg-orange-500 h-full"></div>
+                        <div className="relative z-10">
+                            <h2 className="text-4xl font-serif text-[#2D2926] flex items-center gap-5">
+                                <div className="w-14 h-14 rounded-2xl bg-orange-50 flex items-center justify-center text-orange-500 shadow-sm border border-orange-100">
+                                    <ShieldCheck size={32} />
+                                </div>
+                                {userSubTab === 'users' ? 'Erişim & Yetki' : 'Hesap Ayarlarınız'}
+                            </h2>
+                            <p className="text-stone-400 mt-3 text-[15px] max-w-lg font-light leading-relaxed">
+                                {userSubTab === 'users'
+                                    ? 'Sisteme erişebilecek ekip üyelerini tanımlayın ve yetki seviyelerini yönetin.'
+                                    : 'Giriş yapmış olduğunuz hesabın parolasını ve kullanıcı adını güncelleyin.'}
+                            </p>
+                        </div>
+
+                        <div className="flex gap-4 relative z-10">
+                            <div className="bg-stone-50 px-8 py-5 rounded-[2rem] border border-stone-100 min-w-[140px] text-center">
+                                <p className="text-[9px] font-bold text-stone-400 uppercase tracking-[0.2em] mb-2">Aktif Hesaplar</p>
+                                <p className="text-3xl font-serif text-stone-800">{users.length}</p>
                             </div>
-                            Kullanıcı Yönetimi
-                        </h2>
-                        <p className="text-gray-400 mt-2 text-sm max-w-md">Erişim yetkilerini yönetin ve ekip üyelerinizin rollerini düzenleyin.</p>
+                        </div>
                     </div>
 
-                    <div className="flex gap-4">
-                        <div className="bg-orange-50/50 px-5 py-3 rounded-2xl border border-orange-100">
-                            <p className="text-[10px] font-bold text-orange-400 uppercase tracking-widest mb-1">Yöneticiler</p>
-                            <p className="text-2xl font-bold text-orange-700">{adminCount}</p>
-                        </div>
-                        <div className="bg-blue-50/50 px-5 py-3 rounded-2xl border border-blue-100">
-                            <p className="text-[10px] font-bold text-blue-400 uppercase tracking-widest mb-1">Editörler</p>
-                            <p className="text-2xl font-bold text-blue-700">{editorCount}</p>
-                        </div>
+                    {/* Internal Tabs */}
+                    <div className="flex border-t border-gray-50 p-2 gap-2 bg-stone-50/30">
+                        <button
+                            onClick={() => setUserSubTab('users')}
+                            className={`flex-1 flex items-center justify-center gap-2 py-4 rounded-2xl text-[11px] font-bold uppercase tracking-widest transition-all ${userSubTab === 'users' ? 'bg-white text-orange-600 shadow-sm border border-orange-100' : 'text-stone-400 hover:text-stone-600'}`}
+                        >
+                            <Users size={16} /> Ekip Yönetimi
+                        </button>
+                        <button
+                            onClick={() => setUserSubTab('account')}
+                            className={`flex-1 flex items-center justify-center gap-2 py-4 rounded-2xl text-[11px] font-bold uppercase tracking-widest transition-all ${userSubTab === 'account' ? 'bg-white text-orange-600 shadow-sm border border-orange-100' : 'text-stone-400 hover:text-stone-600'}`}
+                        >
+                            <User size={16} /> Kişisel Profilim
+                        </button>
                     </div>
                 </div>
 
@@ -1188,219 +1799,287 @@ export default function AdminPage() {
                     </div>
                 )}
 
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-                    {/* Add User Form - Left Side */}
-                    {userRole === 'admin' ? (
-                        <div className="lg:col-span-4 bg-white rounded-3xl p-8 border border-gray-100 shadow-sm sticky top-24">
-                            <h3 className="font-bold text-xs text-gray-400 uppercase tracking-[0.2em] mb-8 flex items-center gap-2">
-                                <Plus size={14} /> Yeni Üye Ekle
-                            </h3>
-                            <form onSubmit={handleCreateUser} className="space-y-6">
-                                <div>
-                                    <label className="block text-[11px] font-bold text-gray-500 mb-2 uppercase tracking-wider">Kullanıcı Adı</label>
+                {userSubTab === 'users' ? (
+                    <div className="grid grid-cols-1 xl:grid-cols-12 gap-10">
+                        {/* Left Column: Form and Stats */}
+                        <div className="xl:col-span-4 space-y-8">
+                            {/* Stats Summary */}
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="bg-gradient-to-br from-orange-500 to-orange-600 p-5 rounded-[2rem] text-white shadow-lg shadow-orange-200/50">
+                                    <p className="text-[10px] font-bold opacity-80 uppercase tracking-widest mb-1">Yöneticiler</p>
+                                    <p className="text-3xl font-serif">{adminCount}</p>
+                                </div>
+                                <div className="bg-gradient-to-br from-stone-700 to-stone-800 p-5 rounded-[2rem] text-white shadow-lg shadow-stone-200/50">
+                                    <p className="text-[10px] font-bold opacity-80 uppercase tracking-widest mb-1">Editörler</p>
+                                    <p className="text-3xl font-serif">{editorCount}</p>
+                                </div>
+                            </div>
+
+                            {/* Add User Form */}
+                            {userRole === 'admin' ? (
+                                <div className="bg-white rounded-[2.5rem] p-8 border border-gray-100 shadow-xl shadow-stone-100/50 overflow-hidden relative">
+                                    <div className="absolute top-0 right-0 w-32 h-32 bg-orange-50 rounded-full blur-3xl -mr-16 -mt-16 opacity-50"></div>
+                                    <h3 className="font-bold text-xs text-stone-400 uppercase tracking-[0.2em] mb-8 flex items-center gap-2">
+                                        <Plus size={14} className="text-orange-500" /> Yeni Erişim Tanımla
+                                    </h3>
+                                    <form onSubmit={handleCreateUser} className="space-y-6 relative">
+                                        <div className="space-y-2">
+                                            <label className="block text-[11px] font-bold text-stone-500 uppercase tracking-wider ml-1">Kullanıcı Adı</label>
+                                            <div className="relative">
+                                                <input
+                                                    type="text"
+                                                    required
+                                                    value={newUserForm.username}
+                                                    onChange={e => setNewUserForm({ ...newUserForm, username: e.target.value })}
+                                                    className="w-full pl-12 pr-4 py-4 bg-stone-50 border border-stone-100 rounded-2xl text-sm focus:border-orange-500 focus:bg-white outline-none transition-all placeholder:text-stone-300"
+                                                    placeholder="ör: hakan_k"
+                                                />
+                                                <User className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-300" size={18} />
+                                            </div>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="block text-[11px] font-bold text-stone-500 uppercase tracking-wider ml-1">Geçici Şifre</label>
+                                            <div className="relative">
+                                                <input
+                                                    type="password"
+                                                    required
+                                                    value={newUserForm.password}
+                                                    onChange={e => setNewUserForm({ ...newUserForm, password: e.target.value })}
+                                                    className="w-full pl-12 pr-4 py-4 bg-stone-50 border border-stone-100 rounded-2xl text-sm focus:border-orange-500 focus:bg-white outline-none transition-all placeholder:text-stone-300"
+                                                    placeholder="••••••••"
+                                                />
+                                                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-300" size={18} />
+                                            </div>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="block text-[11px] font-bold text-stone-500 uppercase tracking-wider ml-1">Erişim Rolü</label>
+                                            <div className="relative">
+                                                <select
+                                                    value={newUserForm.role}
+                                                    onChange={e => setNewUserForm({ ...newUserForm, role: e.target.value })}
+                                                    className="w-full pl-12 pr-10 py-4 bg-stone-50 border border-stone-100 rounded-2xl text-sm focus:border-orange-500 focus:bg-white outline-none transition-all appearance-none cursor-pointer"
+                                                >
+                                                    <option value="editor">İçerik Editörü</option>
+                                                    <option value="admin">Sistem Yöneticisi</option>
+                                                </select>
+                                                <ShieldCheck className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-300" size={18} />
+                                                <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-stone-300 pointer-events-none" size={16} />
+                                            </div>
+                                        </div>
+                                        <button type="submit" className="w-full bg-[#2D2926] text-white py-5 rounded-2xl text-[10px] font-bold tracking-[0.3em] uppercase hover:bg-black transition-all shadow-xl shadow-stone-200 active:scale-[0.98] mt-4">
+                                            Erişimi Oluştur
+                                        </button>
+                                    </form>
+                                </div>
+                            ) : (
+                                <div className="bg-amber-50/50 rounded-[2.5rem] p-10 border border-amber-100 text-center space-y-4">
+                                    <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center mx-auto text-amber-500 shadow-sm border border-amber-100">
+                                        <Lock size={24} />
+                                    </div>
+                                    <h3 className="font-bold text-amber-900 font-serif">Kısıtlı Alan</h3>
+                                    <p className="text-amber-700/70 text-[13px] leading-relaxed">Ekip üyesi eklemek için Yönetici yetkisi gerekmektedir.</p>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Right Column: User List */}
+                        <div className="xl:col-span-8 space-y-6">
+                            <div className="flex items-center justify-between px-4 mb-2">
+                                <h3 className="font-bold text-[10px] text-stone-400 uppercase tracking-[0.3em] flex items-center gap-2">
+                                    <List size={14} /> Kayıtlı Üyeler
+                                </h3>
+                                <span className="text-[10px] bg-stone-100 text-stone-500 font-bold px-3 py-1 rounded-full">{users.length} Hesap</span>
+                            </div>
+
+                            <div className="grid gap-4">
+                                {users.map((u, idx) => {
+                                    const isAdmin = u.role === 'admin';
+                                    return (
+                                        <div key={u.id} className="bg-white rounded-[2rem] p-4 pr-6 border border-gray-100 shadow-sm hover:shadow-xl hover:shadow-stone-100 transition-all group animate-in fade-in slide-in-from-bottom-4 duration-500" style={{ animationDelay: `${idx * 100}ms` }}>
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex items-center gap-6">
+                                                    <div className={`w-16 h-16 rounded-2xl flex items-center justify-center text-xl font-serif shadow-inner ${isAdmin ? 'bg-orange-50 text-orange-500' : 'bg-stone-50 text-stone-500'}`}>
+                                                        {u.username?.charAt(0).toUpperCase()}
+                                                    </div>
+                                                    <div>
+                                                        <div className="flex items-center gap-3 mb-1">
+                                                            <p className="font-bold text-[#2D2926] text-xl font-serif tracking-tight">{u.username}</p>
+                                                            <span className={`px-4 py-1 rounded-full text-[9px] font-bold uppercase tracking-widest border ${isAdmin ? 'bg-orange-50 text-orange-600 border-orange-100' : 'bg-stone-50 text-stone-600 border-stone-100'}`}>
+                                                                {isAdmin ? 'Yönetici' : 'Editör'}
+                                                            </span>
+                                                        </div>
+                                                        <div className="flex items-center gap-4 text-[11px] text-stone-400">
+                                                            <span className="flex items-center gap-1.5"><Shield size={12} className="text-orange-300" /> v{idx + 1}.0</span>
+                                                            <span className="flex items-center gap-1.5"><Clock size={12} className="text-stone-300" /> Aktif Hesap</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div className="flex items-center gap-4">
+                                                    {userRole === 'admin' && loginUsername !== u.username ? (
+                                                        <div className="flex items-center gap-2">
+                                                            <button
+                                                                onClick={() => {
+                                                                    setEditingUser(u);
+                                                                    setEditUserForm({
+                                                                        username: u.username || '',
+                                                                        password: '',
+                                                                        role: u.role || 'editor'
+                                                                    });
+                                                                }}
+                                                                className="w-11 h-11 flex items-center justify-center rounded-2xl bg-stone-50 text-stone-400 hover:bg-orange-50 hover:text-orange-500 transition-all group-hover:bg-orange-50"
+                                                                title="Düzenle"
+                                                            >
+                                                                <Edit3 size={18} />
+                                                            </button>
+                                                            <button
+                                                                onClick={() => handleDeleteUser(u.id)}
+                                                                className="w-11 h-11 flex items-center justify-center rounded-2xl bg-stone-50 text-stone-400 hover:bg-red-50 hover:text-red-500 transition-all group-hover:bg-red-50"
+                                                                title="Erişimi Kaldır"
+                                                            >
+                                                                <Trash2 size={18} />
+                                                            </button>
+                                                        </div>
+                                                    ) : (u.username === loginUsername ? (
+                                                        <div className="bg-[#2D2926] text-white px-5 py-2 rounded-xl text-[9px] font-bold uppercase tracking-widest shadow-lg shadow-stone-200">
+                                                            Aktif Oturum
+                                                        </div>
+                                                    ) : null)}
+                                                </div>
+                                            </div>
+
+                                            {/* Edit Form (Inline) */}
+                                            {editingUser?.id === u.id && (
+                                                <div className="mt-6 pt-6 border-t border-stone-50 animate-in fade-in slide-in-from-top-2">
+                                                    <form onSubmit={handleUpdateUser} className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                                                        <div>
+                                                            <label className="block text-[10px] font-bold text-stone-400 uppercase mb-2 ml-1">Kullanıcı Adı</label>
+                                                            <input
+                                                                type="text"
+                                                                value={editUserForm.username}
+                                                                onChange={e => setEditUserForm({ ...editUserForm, username: e.target.value })}
+                                                                className="w-full px-4 py-3 bg-stone-50 border border-stone-100 rounded-xl text-sm outline-none focus:border-orange-500"
+                                                            />
+                                                        </div>
+                                                        <div>
+                                                            <label className="block text-[10px] font-bold text-stone-400 uppercase mb-2 ml-1">Yeni Şifre (İsteğe Bağlı)</label>
+                                                            <input
+                                                                type="password"
+                                                                placeholder="Değişmeyecekse boş bırakın"
+                                                                value={editUserForm.password}
+                                                                onChange={e => setEditUserForm({ ...editUserForm, password: e.target.value })}
+                                                                className="w-full px-4 py-3 bg-stone-50 border border-stone-100 rounded-xl text-sm outline-none focus:border-orange-500"
+                                                            />
+                                                        </div>
+                                                        <div className="flex gap-2">
+                                                            <button type="submit" className="flex-1 bg-orange-600 text-white py-3 rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-orange-700">
+                                                                Güncelle
+                                                            </button>
+                                                            <button type="button" onClick={() => setEditingUser(null)} className="px-4 py-3 bg-stone-100 text-stone-500 rounded-xl text-[10px] font-bold uppercase hover:bg-stone-200">
+                                                                İptal
+                                                            </button>
+                                                        </div>
+                                                    </form>
+                                                </div>
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+
+                            {users.length === 0 && (
+                                <div className="bg-stone-50/50 rounded-[3rem] py-24 text-center border-2 border-dashed border-stone-100">
+                                    <Users className="mx-auto text-stone-200 mb-6" size={64} />
+                                    <p className="text-stone-400 font-medium italic font-serif">Sistemde kayıtlı kullanıcı bulunamadı.</p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                ) : (
+                    /* Account Settings / Password Change Section */
+                    <div className="max-w-3xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                        {apiMessage && (
+                            <div className={`flex items-center gap-3 px-6 py-4 rounded-2xl text-sm font-bold shadow-lg transition-all animate-in fade-in slide-in-from-top-4 ${apiMessage.type === 'success' ? 'bg-orange-600 text-white' : 'bg-red-600 text-white'}`}>
+                                {apiMessage.type === 'success' ? <CheckCircle size={20} className="shrink-0" /> : <AlertCircle size={20} className="shrink-0" />}
+                                {apiMessage.text}
+                            </div>
+                        )}
+
+                        <form onSubmit={handleUpdateAuth} className="bg-white rounded-[3rem] p-10 border border-gray-100 shadow-xl shadow-stone-100/50 space-y-10">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                                <div className="space-y-3">
+                                    <label className="block text-[11px] font-bold text-stone-500 uppercase tracking-[0.2em] ml-1">Kullanıcı Adınızı Güncelleyin</label>
                                     <div className="relative">
                                         <input
                                             type="text"
-                                            required
-                                            value={newUserForm.username}
-                                            onChange={e => setNewUserForm({ ...newUserForm, username: e.target.value })}
-                                            className="w-full pl-11 pr-4 py-3.5 bg-gray-50 border border-gray-100 rounded-2xl text-sm focus:border-orange-500 focus:bg-white outline-none transition-all placeholder:text-gray-300"
-                                            placeholder="ör: hakan_k"
+                                            value={newUsername}
+                                            onChange={(e) => setNewUsername(e.target.value)}
+                                            placeholder="Aynı kalacaksa boş bırakın"
+                                            className="w-full pl-12 pr-4 py-4 bg-stone-50 border border-stone-100 rounded-3xl text-sm focus:border-orange-500 focus:bg-white outline-none transition-all"
                                         />
-                                        <User className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                                        <User className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-300" size={18} />
                                     </div>
                                 </div>
-                                <div>
-                                    <label className="block text-[11px] font-bold text-gray-500 mb-2 uppercase tracking-wider">Şifre</label>
+
+                                <div className="space-y-3">
+                                    <label className="block text-[11px] font-bold text-stone-500 uppercase tracking-[0.2em] ml-1">Yeni Şifreniz</label>
                                     <div className="relative">
                                         <input
                                             type="password"
-                                            required
-                                            value={newUserForm.password}
-                                            onChange={e => setNewUserForm({ ...newUserForm, password: e.target.value })}
-                                            className="w-full pl-11 pr-4 py-3.5 bg-gray-50 border border-gray-100 rounded-2xl text-sm focus:border-orange-500 focus:bg-white outline-none transition-all placeholder:text-gray-300"
-                                            placeholder="••••••••"
+                                            value={newPassword}
+                                            onChange={(e) => setNewPassword(e.target.value)}
+                                            placeholder="Değiştirmeyecekseniz boş bırakın"
+                                            className="w-full pl-12 pr-4 py-4 bg-stone-50 border border-stone-100 rounded-3xl text-sm focus:border-orange-500 focus:bg-white outline-none transition-all"
                                         />
-                                        <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                                        <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-300" size={18} />
                                     </div>
-                                </div>
-                                <div>
-                                    <label className="block text-[11px] font-bold text-gray-500 mb-2 uppercase tracking-wider">Yetki Seviyesi</label>
-                                    <div className="relative">
-                                        <select
-                                            value={newUserForm.role}
-                                            onChange={e => setNewUserForm({ ...newUserForm, role: e.target.value })}
-                                            className="w-full pl-11 pr-10 py-3.5 bg-gray-50 border border-gray-100 rounded-2xl text-sm focus:border-orange-500 focus:bg-white outline-none transition-all appearance-none cursor-pointer"
-                                        >
-                                            <option value="editor">Editör (Kısıtlı)</option>
-                                            <option value="admin">Yönetici (Tam)</option>
-                                        </select>
-                                        <Settings className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                                        <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-300 pointer-events-none" size={16} />
-                                    </div>
-                                </div>
-                                <button type="submit" className="w-full bg-[#2D2926] text-white py-4 rounded-2xl text-xs font-bold tracking-[0.2em] uppercase hover:bg-black transition-all shadow-lg shadow-[#2D2926]/10 active:scale-[0.98]">
-                                    Kullanıcıyı Oluştur
-                                </button>
-                            </form>
-                        </div>
-                    ) : (
-                        <div className="lg:col-span-4 bg-amber-50/50 rounded-3xl p-8 border border-amber-100 text-center space-y-4">
-                            <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto text-amber-600">
-                                <Lock size={24} />
-                            </div>
-                            <h3 className="font-bold text-amber-900">Yetki Sınırı</h3>
-                            <p className="text-amber-700/70 text-sm leading-relaxed">Yeni kullanıcı eklemek için yönetici yetkisine sahip olmanız gerekmektedir.</p>
-                        </div>
-                    )}
-
-                    {/* User List - Right Side */}
-                    <div className="lg:col-span-8 space-y-4">
-                        <div className="flex items-center justify-between px-2 mb-4">
-                            <h3 className="font-bold text-xs text-gray-400 uppercase tracking-[0.2em]">Kullanıcı Listesi</h3>
-                            <span className="text-[11px] text-gray-400 font-medium">Toplam {users.length} Kayıt</span>
-                        </div>
-
-                        {users.map((u, idx) => {
-                            const isAdmin = u.role === 'admin';
-                            return (
-                                <div key={u.id} className="bg-white rounded-3xl p-5 border border-gray-100 shadow-sm hover:shadow-md transition-all group animate-in fade-in slide-in-from-right-4" style={{ animationDelay: `${idx * 50}ms` }}>
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-5">
-                                            <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-xl font-bold shadow-sm ${isAdmin ? 'bg-orange-50 text-orange-500' : 'bg-blue-50 text-blue-500'}`}>
-                                                {u.username?.charAt(0).toUpperCase()}
-                                            </div>
-                                            <div>
-                                                <div className="flex items-center gap-3">
-                                                    <p className="font-bold text-[#2D2926] text-lg">{u.username}</p>
-                                                    <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border ${isAdmin ? 'bg-orange-50 text-orange-600 border-orange-100' : 'bg-blue-50 text-blue-600 border-blue-100'}`}>
-                                                        {isAdmin ? 'Yönetici' : 'Editör'}
-                                                    </span>
-                                                </div>
-                                                <p className="text-xs text-gray-400 mt-1 flex items-center gap-1.5">
-                                                    <Clock size={12} />
-                                                    Son eklenen kullanıcılar arasında
-                                                </p>
-                                            </div>
-                                        </div>
-
-                                        <div className="flex items-center gap-3">
-                                            {userRole === 'admin' && loginUsername !== u.username ? (
-                                                <button
-                                                    onClick={() => handleDeleteUser(u.id)}
-                                                    className="w-10 h-10 flex items-center justify-center rounded-xl bg-red-50 text-red-500 hover:bg-red-500 hover:text-white transition-all shadow-sm"
-                                                    title="Kullanıcıyı Sil"
-                                                >
-                                                    <X size={18} />
-                                                </button>
-                                            ) : (u.username === loginUsername ? (
-                                                <span className="text-[10px] font-bold text-gray-300 uppercase italic px-4 px-2 bg-gray-50 rounded-lg">Siz</span>
-                                            ) : null)}
-                                        </div>
-                                    </div>
-                                </div>
-                            );
-                        })}
-
-                        {users.length === 0 && (
-                            <div className="bg-gray-50 rounded-3xl py-20 text-center border-2 border-dashed border-gray-200">
-                                <Users className="mx-auto text-gray-300 mb-4" size={48} />
-                                <p className="text-gray-400 font-medium italic">Henüz kullanıcı bulunmuyor.</p>
-                            </div>
-                        )}
-                    </div>
-                </div>
-
-                {/* Account Settings / Password Change Section */}
-                <div className="mt-12 pt-10 border-t border-gray-100">
-                    <div className="mb-8 flex items-center gap-3">
-                        <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-lg border border-gray-100">
-                            <KeyRound size={22} className="text-orange-500" />
-                        </div>
-                        <div>
-                            <h3 className="text-2xl font-serif text-[#2D2926]">Hesap Ayarlarınız</h3>
-                            <p className="text-sm text-gray-500 mt-1">Giriş yapmış olduğunuz hesabın bilgilerini güncelleyin.</p>
-                        </div>
-                    </div>
-
-                    {apiMessage && (
-                        <div className={`mb-8 flex items-center gap-3 px-6 py-4 rounded-xl text-sm font-bold shadow-lg transition-all animate-in fade-in slide-in-from-top-4 ${apiMessage.type === 'success' ? 'bg-orange-600 text-white' : 'bg-red-600 text-white'}`}>
-                            {apiMessage.type === 'success' ? <CheckCircle size={20} className="shrink-0" /> : <AlertCircle size={20} className="shrink-0" />}
-                            {apiMessage.text}
-                        </div>
-                    )}
-
-                    <form onSubmit={handleUpdateAuth} className="space-y-8 bg-white rounded-3xl p-8 border border-gray-100 shadow-sm">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                            <div>
-                                <label className="block text-[11px] font-bold text-gray-500 mb-2 uppercase tracking-[0.2em]">Yeni Kullanıcı Adı</label>
-                                <div className="relative">
-                                    <input
-                                        type="text"
-                                        value={newUsername}
-                                        onChange={(e) => setNewUsername(e.target.value)}
-                                        placeholder="Değiştirmek için yazın..."
-                                        className="w-full pl-11 pr-4 py-3.5 bg-gray-50 border border-gray-100 rounded-2xl text-sm focus:border-orange-500 focus:bg-white outline-none transition-all"
-                                    />
-                                    <User className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                                 </div>
                             </div>
 
-                            <div>
-                                <label className="block text-[11px] font-bold text-gray-500 mb-2 uppercase tracking-[0.2em]">Yeni Şifre</label>
-                                <div className="relative">
+                            <div className="bg-orange-50/50 rounded-[2rem] p-8 border border-orange-100/50 flex flex-col md:flex-row md:items-center justify-between gap-8">
+                                <div className="flex-1">
+                                    <label className="flex items-center gap-2 text-[10px] font-bold text-orange-600 mb-3 uppercase tracking-[0.2em]">
+                                        <ShieldCheck size={14} />
+                                        Güvenlik Doğrulaması <span className="text-red-400">*</span>
+                                    </label>
+                                    <p className="text-xs text-orange-800/60 leading-relaxed font-light">
+                                        Değişiklikleri onaylamak için lütfen <strong>güncel şifrenizi</strong> girin.
+                                    </p>
+                                </div>
+                                <div className="flex-1 md:max-w-xs w-full">
                                     <input
                                         type="password"
-                                        value={newPassword}
-                                        onChange={(e) => setNewPassword(e.target.value)}
-                                        placeholder="••••••••"
-                                        className="w-full pl-11 pr-4 py-3.5 bg-gray-50 border border-gray-100 rounded-2xl text-sm focus:border-orange-500 focus:bg-white outline-none transition-all"
+                                        value={currentPassword}
+                                        onChange={(e) => setCurrentPassword(e.target.value)}
+                                        placeholder="Mevcut parolanız..."
+                                        required
+                                        className="w-full px-6 py-4 bg-white border border-orange-200 rounded-2xl text-sm focus:border-orange-500 focus:ring-8 focus:ring-orange-500/5 outline-none transition-all"
                                     />
-                                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                                 </div>
                             </div>
-                        </div>
 
-                        <div className="bg-orange-50/30 rounded-2xl p-6 border border-orange-100/50 flex flex-col md:flex-row md:items-center justify-between gap-6">
-                            <div className="flex-1">
-                                <label className="flex items-center gap-2 text-[10px] font-bold text-orange-600 mb-2 uppercase tracking-[0.2em]">
-                                    <Lock size={12} />
-                                    Mevcut Şifre Onayı <span className="text-red-400">*</span>
-                                </label>
-                                <p className="text-xs text-orange-800/60 leading-relaxed">
-                                    Güvenliğiniz için değişiklik yapmadan önce mevcut şifrenizi doğrulamanız gerekmektedir.
-                                </p>
+                            <div className="flex justify-end pt-4">
+                                <button
+                                    type="submit"
+                                    disabled={isUpdating || !currentPassword || (!newUsername && !newPassword)}
+                                    className="px-12 py-5 bg-[#2D2926] text-white font-bold tracking-[0.3em] uppercase text-[10px] rounded-2xl hover:bg-black transition-all duration-300 disabled:opacity-20 disabled:cursor-not-allowed flex items-center justify-center gap-4 shadow-2xl active:scale-95"
+                                >
+                                    {isUpdating ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+                                    {isUpdating ? 'GÜNCELLENİYOR...' : 'DEĞİŞİKLİKLERİ UYGULA'}
+                                </button>
                             </div>
-                            <div className="flex-1 md:max-w-xs w-full">
-                                <input
-                                    type="password"
-                                    value={currentPassword}
-                                    onChange={(e) => setCurrentPassword(e.target.value)}
-                                    placeholder="Doğrulama için şifreniz"
-                                    required
-                                    className="w-full px-5 py-3.5 bg-white border border-orange-200 rounded-2xl text-sm focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 outline-none transition-all"
-                                />
-                            </div>
-                        </div>
-
-                        <div className="flex justify-end pt-4">
-                            <button
-                                type="submit"
-                                disabled={isUpdating || !currentPassword || (!newUsername && !newPassword)}
-                                className="px-10 py-4 bg-orange-600 text-white font-bold tracking-[0.2em] uppercase text-xs rounded-2xl hover:bg-orange-700 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3 shadow-xl shadow-orange-500/20 active:scale-95"
-                            >
-                                {isUpdating ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-                                {isUpdating ? 'GÜNCELLENİYOR...' : 'DEĞİŞİKLİKLERİ KAYDET'}
-                            </button>
-                        </div>
-                    </form>
-                </div>
+                        </form>
+                    </div>
+                )}
             </div>
         );
     };
 
     /**
      * Renders Session Logs
+     */
+    /**
+     * Sistem giriş logları sayfasını oluşturur
      */
     const renderSessionLogs = () => (
         <div className="w-full max-w-5xl mx-auto mt-10">
@@ -1410,7 +2089,7 @@ export default function AdminPage() {
                         <Clock size={24} className="text-[#F97316]" />
                         Oturum Geçmişi
                     </h2>
-                    <p className="text-sm text-gray-500 mt-2">Sisteme yapılan en son 500 giriş denemesini buradan görüntüleyebilirsiniz.</p>
+                    <p className="text-sm text-gray-500 mt-2">Sisteme yapılan en son {(content?.systemSettings?.sessionLogLimit !== undefined && content?.systemSettings?.sessionLogLimit !== null && content?.systemSettings?.sessionLogLimit !== '') ? content.systemSettings.sessionLogLimit : '10'} giriş denemesini buradan görüntüleyebilirsiniz.</p>
                 </div>
 
                 <div className="overflow-x-auto border border-gray-100 rounded-2xl">
@@ -1423,7 +2102,7 @@ export default function AdminPage() {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100">
-                            {sessionLogs.map(log => (
+                            {sessionLogs.slice(0, parseInt((content?.systemSettings?.sessionLogLimit !== undefined && content?.systemSettings?.sessionLogLimit !== null && content?.systemSettings?.sessionLogLimit !== '') ? content.systemSettings.sessionLogLimit : '10')).map(log => (
                                 <tr key={log.id} className="hover:bg-gray-50/50 transition-colors">
                                     <td className="px-6 py-4 whitespace-nowrap text-gray-500">
                                         {new Date(log.loginTime).toLocaleString('tr-TR', {
@@ -1451,11 +2130,11 @@ export default function AdminPage() {
     );
 
     const handleDeleteInquiry = async (id: string) => {
-        if (!confirm('Bu başvuruyu silmek istediğinize emin misiniz?')) return;
         try {
             const res = await fetch(`/api/inquiries?id=${id}`, { method: 'DELETE' });
             if (res.ok) {
                 setInquiries(prev => prev.filter(inq => inq.id !== id));
+                setInquiryDeletingId(null);
                 setMessage({ type: 'success', text: 'Başvuru başarıyla silindi.' });
                 setTimeout(() => setMessage(null), 2500);
             } else {
@@ -1486,18 +2165,27 @@ export default function AdminPage() {
         }
     };
 
+    /**
+     * Müşteri başvuruları (Inquiries) yönetim sayfasını oluşturur
+     */
     const renderInquiries = () => {
         const filtered = inquiries.filter(inq => {
             const searchTerms = [inq.name, inq.message, inq.email, inq.phone].map(v => (v || '').toLowerCase());
             const matchesSearch = searchTerms.some(t => t.includes(inquirySearch.toLowerCase()));
             const matchesType = inquiryFilter === 'all' || inq.eventType === inquiryFilter;
-            return matchesSearch && matchesType;
+
+            // Okundu/Okunmadı filtrelemesi
+            const status = inq.status || 'beklemede';
+            const matchesReadState = inquiryTypeFilter === 'unread'
+                ? status === 'beklemede'
+                : status !== 'beklemede';
+
+            return matchesSearch && matchesType && matchesReadState;
         });
 
         const total = filtered.length;
-        const pending = filtered.filter(i => (i.status || 'beklemede') === 'beklemede').length;
-        const approved = filtered.filter(i => i.status === 'olumlu').length;
-        const rejected = filtered.filter(i => i.status === 'olumsuz').length;
+        const unreadCount = inquiries.filter(i => (i.status || 'beklemede') === 'beklemede').length;
+        const readCount = inquiries.filter(i => (i.status || 'beklemede') !== 'beklemede').length;
 
         return (
             <div className="w-full max-w-4xl mx-auto py-6 px-2">
@@ -1506,9 +2194,9 @@ export default function AdminPage() {
                     <div>
                         <h2 className="text-2xl font-serif text-[#2D2926] flex items-center gap-3">
                             <Mail size={24} className="text-[#F97316]" />
-                            Gelen Başvurular
+                            Başvuru Havuzu
                         </h2>
-                        <p className="text-sm text-gray-400 mt-1">Müşteri başvurularını buradan yönetebilirsiniz.</p>
+                        <p className="text-sm text-gray-400 mt-1">Müşteri taleplerini buradan takip edebilirsiniz.</p>
                     </div>
 
                     <div className="flex flex-wrap items-center gap-3">
@@ -1522,46 +2210,160 @@ export default function AdminPage() {
                             />
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                         </div>
-                        <select
-                            value={inquiryFilter}
-                            onChange={(e) => setInquiryFilter(e.target.value)}
-                            className="px-4 py-2 bg-white border border-gray-200 rounded-xl text-sm focus:border-orange-500 outline-none cursor-pointer shadow-sm"
-                        >
-                            <option value="all">Tüm Etkinlikler</option>
-                            {Array.from(new Set(inquiries.map(i => i.eventType))).filter(Boolean).map(type => (
-                                <option key={type} value={type}>{type}</option>
-                            ))}
-                        </select>
                     </div>
                 </div>
 
-                {/* Summary Cards */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
-                    {[
-                        { label: 'Toplam', value: total, color: 'text-[#2D2926]', bg: 'bg-white', border: 'border-gray-200' },
-                        { label: 'Beklemede', value: pending, color: 'text-amber-600', bg: 'bg-amber-50', border: 'border-amber-200' },
-                        { label: 'Olumlu', value: approved, color: 'text-green-600', bg: 'bg-green-50', border: 'border-green-200' },
-                        { label: 'Olumsuz', value: rejected, color: 'text-red-600', bg: 'bg-red-50', border: 'border-red-200' },
-                    ].map((s, i) => (
-                        <div key={i} className={`${s.bg} border ${s.border} rounded-2xl p-4 shadow-sm`}>
-                            <p className="text-xs text-gray-500 font-medium">{s.label}</p>
-                            <p className={`text-3xl font-bold mt-1 ${s.color}`}>{s.value}</p>
-                        </div>
-                    ))}
+                {/* Sub Tabs */}
+                <div className="flex gap-2 mb-8 bg-gray-100/50 p-1.5 rounded-2xl border border-gray-100">
+                    <button
+                        onClick={() => setInquiryTypeFilter('unread')}
+                        className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-bold transition-all ${inquiryTypeFilter === 'unread' ? 'bg-white text-orange-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+                    >
+                        <Clock size={16} /> Bekleyenler ({unreadCount})
+                    </button>
+                    <button
+                        onClick={() => setInquiryTypeFilter('read')}
+                        className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-bold transition-all ${inquiryTypeFilter === 'read' ? 'bg-white text-orange-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+                    >
+                        <CheckCircle size={16} /> Okunanlar ({readCount})
+                    </button>
+                </div>
+
+                {/* Filter Bar */}
+                <div className="flex items-center justify-between mb-4 px-2">
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                        {total} {inquiryTypeFilter === 'unread' ? 'Yeni Başvuru' : 'İşlenmiş Kayıt'}
+                    </p>
+                    <select
+                        value={inquiryFilter}
+                        onChange={(e) => setInquiryFilter(e.target.value)}
+                        className="bg-transparent text-[11px] font-bold text-gray-500 border-none focus:ring-0 cursor-pointer hover:text-orange-500 transition-colors"
+                    >
+                        <option value="all">Filtrele: Tümü</option>
+                        {Array.from(new Set(inquiries.map(i => i.eventType))).filter(Boolean).map(type => (
+                            <option key={type} value={type}>{type}</option>
+                        ))}
+                    </select>
                 </div>
 
                 {/* Inquiry Cards */}
                 <div className="space-y-4">
                     {filtered.length === 0 ? (
-                        <div className="bg-white rounded-2xl border border-gray-100 py-20 text-center">
-                            <div className="w-16 h-16 rounded-full bg-gray-50 flex items-center justify-center text-gray-300 mx-auto mb-4">
-                                <Mail size={32} />
+                        <div className="bg-white rounded-[2rem] border border-gray-100 py-24 text-center">
+                            <div className="w-16 h-16 rounded-2xl bg-gray-50 flex items-center justify-center text-gray-200 mx-auto mb-6">
+                                {inquiryTypeFilter === 'unread' ? <Mail size={32} /> : <CheckCircle size={32} />}
                             </div>
-                            <p className="text-gray-400 font-medium italic">Sonuç bulunamadı.</p>
+                            <p className="text-gray-400 font-medium italic font-serif">
+                                {inquiryTypeFilter === 'unread' ? 'Henüz bekleyen yeni bir başvuru yok.' : 'Okunmuş başvuru bulunmuyor.'}
+                            </p>
                         </div>
                     ) : (
-                        filtered.map(inq => <InquiryCard key={inq.id} inq={inq} onUpdate={handleUpdateInquiry} onDelete={handleDeleteInquiry} />)
+                        filtered.map(inq => <InquiryCard key={inq.id} inq={inq} onUpdate={handleUpdateInquiry} onDelete={(id) => setInquiryDeletingId(id)} />)
                     )}
+                </div>
+
+                {/* Inquiry Delete Confirmation Modal */}
+                {inquiryDeletingId && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm">
+                        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                            <div className="p-6 text-center">
+                                <div className="w-16 h-16 rounded-full bg-red-50 flex items-center justify-center mx-auto mb-4">
+                                    <Trash2 size={28} className="text-red-500" />
+                                </div>
+                                <h3 className="text-lg font-bold text-gray-900 mb-2">Başvuruyu Sil</h3>
+                                <p className="text-sm text-gray-500 px-4">
+                                    Bu müşteri başvurusunu silmek istediğinize emin misiniz? Bu işlem geri alınamaz.
+                                </p>
+                            </div>
+                            <div className="px-6 pb-6 flex items-center justify-center gap-3">
+                                <button
+                                    onClick={() => setInquiryDeletingId(null)}
+                                    className="px-6 py-2.5 bg-white border border-gray-200 text-gray-600 rounded-lg hover:bg-gray-50 transition-colors text-sm font-bold flex-1"
+                                >
+                                    Vazgeç
+                                </button>
+                                <button
+                                    onClick={() => handleDeleteInquiry(inquiryDeletingId)}
+                                    className="px-6 py-2.5 bg-red-600 text-white rounded-lg shadow-md hover:bg-red-700 transition-colors text-sm font-bold flex items-center justify-center gap-2 flex-1"
+                                >
+                                    <Trash2 size={16} />
+                                    Evet, Sil
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+            </div>
+        );
+    };
+
+    /**
+     * Renders General System Settings
+     */
+    /**
+     * Genel sistem kısıtlamaları ve ayarları sayfasını oluşturur
+     */
+    const renderSystemSettings = () => {
+        const settings = {
+            maxImageSize: '10',
+            maxGalleryImages: '30',
+            sessionLogLimit: '10',
+            allowedImageFormats: '.jpg,.jpeg,.png,.webp,.gif',
+            maintenanceMode: 'false',
+            ...(content?.systemSettings || {})
+        };
+
+        const settingFields = [
+            { key: 'maxImageSize', label: 'Maksimum Resim Boyutu (MB)', placeholder: '10', icon: <Upload size={16} className="text-orange-500" />, description: 'Yüklenebilecek maksimum resim dosyası boyutu (MB).', type: 'number' },
+            { key: 'maxGalleryImages', label: 'Maksimum Galeri Resim Sayısı', placeholder: '30', icon: <ImageIcon size={16} className="text-purple-500" />, description: 'Galeriye eklenebilecek maksimum toplam resim sayısı.', type: 'number' },
+            { key: 'sessionLogLimit', label: 'Oturum Kaydı Gösterim Sınırı', placeholder: '10', icon: <Clock size={16} className="text-blue-500" />, description: 'Yönetim panelinde gösterilecek son oturum işlemlerinin sayısı.', type: 'number' },
+            { key: 'allowedImageFormats', label: 'İzin Verilen Resim Formatları', placeholder: '.jpg,.jpeg,.png,.webp', icon: <ImageIcon size={16} className="text-emerald-500" />, description: 'Yüklenmesine izin verilen dosya uzantıları (virgülle ayırın).', type: 'text' },
+            { key: 'maintenanceMode', label: 'Bakım Modu', icon: <Lock size={16} className="text-red-500" />, description: 'Siteyi ziyaretçilere kapatır (Henüz aktif değil, altyapı hazır).', type: 'toggle' },
+        ];
+
+        return (
+            <div className="w-full max-w-3xl mx-auto py-8 px-4 space-y-8">
+                {/* Header */}
+                <div className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
+                    <div className="flex items-center gap-4 mb-2">
+                        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-50 to-indigo-50 flex items-center justify-center text-blue-500 shadow-inner">
+                            <Settings size={28} />
+                        </div>
+                        <div>
+                            <h2 className="text-2xl font-serif text-[#2D2926]">Genel Sistem Ayarları</h2>
+                            <p className="text-sm text-gray-400 mt-1">Sistem kısıtlamalarını ve genel çalışma parametrelerini buradan yönetin.</p>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Fields */}
+                <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-8 space-y-7">
+                    {settingFields.map((field) => (
+                        <div key={field.key} className="group">
+                            <label className="flex items-center gap-2.5 text-sm font-bold text-gray-700 mb-2">
+                                {field.icon}
+                                {field.label}
+                            </label>
+                            <p className="text-[11px] text-gray-400 mb-3 leading-relaxed">{field.description}</p>
+
+                            {field.type === 'toggle' ? (
+                                <button
+                                    onClick={() => handleChange(['systemSettings', field.key], settings[field.key] === 'true' ? 'false' : 'true')}
+                                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${settings[field.key] === 'true' ? 'bg-orange-600' : 'bg-gray-200'}`}
+                                >
+                                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${settings[field.key] === 'true' ? 'translate-x-6' : 'translate-x-1'}`} />
+                                </button>
+                            ) : (
+                                <input
+                                    type={field.type === 'number' ? 'number' : 'text'}
+                                    value={settings[field.key] || ''}
+                                    onChange={(e) => handleChange(['systemSettings', field.key], e.target.value)}
+                                    placeholder={field.placeholder}
+                                    className="w-full px-4 py-3.5 bg-gray-50 border border-gray-200 rounded-2xl text-sm focus:border-orange-500 focus:bg-white focus:ring-2 focus:ring-orange-500/10 outline-none transition-all text-gray-700 placeholder:text-gray-300"
+                                />
+                            )}
+                        </div>
+                    ))}
                 </div>
             </div>
         );
@@ -1569,6 +2371,9 @@ export default function AdminPage() {
 
     /**
      * Renders Meta Settings (SEO)
+     */
+    /**
+     * SEO ve Meta etiketleri (Başlık, Açıklama, Görsel) ayarlarını oluşturur
      */
     const renderMetaSettings = () => {
         const meta = content?.meta || {};
@@ -1642,6 +2447,8 @@ export default function AdminPage() {
                                     value={meta[field.key] || ''}
                                     onChange={(newPath) => handleChange(['meta', field.key], newPath)}
                                     label={field.label}
+                                    maxSizeMB={parseInt(content?.systemSettings?.maxImageSize || '10')}
+                                    allowedFormats={content?.systemSettings?.allowedImageFormats || '.jpg,.jpeg,.png,.webp'}
                                 />
                             ) : (
                                 <input
@@ -1679,6 +2486,9 @@ export default function AdminPage() {
     /**
      * acticeSection degerine gore yalililmis bilesen onizlemesini olusturur
      */
+    /**
+     * Seçili bölüme göre sayfa önizlemesini veya özel yönetim sayfasını oluşturur
+     */
     const renderPreview = () => {
         if (!content || !activeSection) return <div className="p-12 text-center text-gray-400 italic">Sol menüden bir alan seçin...</div>;
 
@@ -1686,7 +2496,9 @@ export default function AdminPage() {
         if (activeSection === 'system_users') return renderUserManagement();
         if (activeSection === 'system_sessions') return renderSessionLogs();
         if (activeSection === 'system_meta') return renderMetaSettings();
+        if (activeSection === 'system_settings') return renderSystemSettings();
         if (activeSection === 'inquiries') return renderInquiries();
+        if (activeSection === 'kasa') return renderKasa();
 
         switch (activeSection) {
             case 'hero':
@@ -1869,10 +2681,12 @@ export default function AdminPage() {
     const isSystemUsersView = activeSection === 'system_users';
     const isSystemSessionsView = activeSection === 'system_sessions';
     const isMetaView = activeSection === 'system_meta';
+    const isSystemSettingsView = activeSection === 'system_settings';
     const isInquiriesView = activeSection === 'inquiries';
     const isEventsView = activeSection === 'events';
+    const isKasaView = activeSection === 'kasa';
     const isMediaLibraryView = activeSection === 'media_library';
-    const isFullScreenView = isStatsView || isSystemUsersView || isSystemSessionsView || isInquiriesView || isMetaView || isMediaLibraryView;
+    const isFullScreenView = isStatsView || isSystemUsersView || isSystemSessionsView || isInquiriesView || isMediaLibraryView || isKasaView || isEventsView;
 
     const getPageTitle = () => {
         if (isStatsView) return 'İstatistikler';
@@ -1880,7 +2694,8 @@ export default function AdminPage() {
         if (isSystemSessionsView) return 'Oturum Geçmişi';
         if (isMetaView) return 'Meta & SEO Ayarları';
         if (isInquiriesView) return 'Başvurular';
-        if (isMediaLibraryView) return 'Dosya Havuzu (Medya)';
+        if (isKasaView) return 'Kasa & Finans';
+        if (isMediaLibraryView) return 'Resim Galerisi';
         if (activeSection && sectionConfig[activeSection]) return sectionConfig[activeSection].label;
         return 'Yönetim Paneli';
     };
@@ -1935,7 +2750,7 @@ export default function AdminPage() {
 
                     <div className="mx-3 border-t border-gray-100" />
 
-                    {/* Dosya Havuzu (Medya) */}
+                    {/* RESİM GALERİSİ */}
                     <div className="px-3">
                         <button
                             onClick={() => setActiveSection('media_library')}
@@ -1945,7 +2760,7 @@ export default function AdminPage() {
                                 }`}
                         >
                             <span className={isMediaLibraryView ? 'text-orange-500' : 'text-gray-400'}><ImageIcon size={16} /></span>
-                            Dosya Havuzu (Medya)
+                            Resim Galerisi
                         </button>
                     </div>
 
@@ -1981,6 +2796,19 @@ export default function AdminPage() {
                                         }).length}
                                     </span>
                                 )}
+                        </button>
+                    </div>
+
+                    <div className="px-3">
+                        <button
+                            onClick={() => setActiveSection('kasa')}
+                            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium transition-all duration-200 ${isKasaView
+                                ? 'bg-emerald-50 text-emerald-700 font-bold border-l-2 border-emerald-500'
+                                : 'text-gray-500 hover:bg-gray-50 hover:text-[#2D2926]'
+                                }`}
+                        >
+                            <span className={isKasaView ? 'text-emerald-500' : 'text-gray-400'}><TrendingUp size={16} /></span>
+                            Kasa Bölümü
                         </button>
                     </div>
 
@@ -2032,6 +2860,16 @@ export default function AdminPage() {
                                 </button>
                                 {isSettingsOpen && (
                                     <div className="space-y-0.5 mt-1">
+                                        <button
+                                            onClick={() => setActiveSection('system_settings')}
+                                            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium transition-all duration-200 ${activeSection === 'system_settings'
+                                                ? 'bg-[#FDFCFB] text-[#2D2926] font-bold shadow-sm border-l-2 border-[#2D2926]'
+                                                : 'text-gray-500 hover:bg-gray-50 hover:text-[#2D2926]'
+                                                }`}
+                                        >
+                                            <span className={activeSection === 'system_settings' ? 'text-[#2D2926]' : 'text-gray-400'}><Settings size={16} /></span>
+                                            Genel Ayarlar
+                                        </button>
                                         <button
                                             onClick={() => setActiveSection('system_users')}
                                             className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium transition-all duration-200 ${activeSection === 'system_users'
@@ -2130,8 +2968,12 @@ export default function AdminPage() {
                         {!isFullScreenView && (
                             <button
                                 onClick={handleSave}
-                                disabled={isSaving}
-                                className="flex items-center gap-2 bg-orange-600 text-white px-5 py-2.5 rounded-lg hover:bg-orange-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium text-[13px] shadow-sm tracking-wide"
+                                disabled={isSaving || !isDirty}
+                                className={`flex items-center gap-2 px-5 py-2.5 rounded-lg transition-all font-medium text-[13px] shadow-sm tracking-wide ${
+                                    isDirty 
+                                    ? 'bg-orange-600 text-white hover:bg-orange-700' 
+                                    : 'bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-100'
+                                }`}
                             >
                                 {isSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
                                 {isSaving ? 'Kaydediliyor...' : 'Değişiklikleri Kaydet'}
@@ -2141,7 +2983,7 @@ export default function AdminPage() {
                 </header>
 
                 {/* KAYDIRILABILIR ICERIK */}
-                <div className="flex-1 overflow-y-auto p-6 flex flex-col lg:flex-row gap-6">
+                <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-8">
 
                     {isStatsView ? (
                         <div className="w-full max-w-4xl mx-auto">
@@ -2167,96 +3009,114 @@ export default function AdminPage() {
                         <div className="w-full flex justify-center px-4 md:px-6 pb-20">
                             {renderEvents()}
                         </div>
+                    ) : isKasaView ? (
+                        <div className="w-full flex justify-center px-4 md:px-6 pb-20">
+                            {renderKasa()}
+                        </div>
                     ) : isMediaLibraryView ? (
                         <div className="w-full flex justify-center px-4 md:px-6 pb-20">
-                            <GalleryManager />
+                            <GalleryManager settings={content.systemSettings} />
+                        </div>
+                    ) : isSystemSettingsView ? (
+                        <div className="w-full flex justify-center px-4 md:px-6">
+                            {renderSystemSettings()}
                         </div>
                     ) : (
-                        <>
-                            {/* LEFT COLUMN: THE FORM */}
-                            <div className="w-full lg:w-1/2 flex flex-col h-fit">
-                                <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
-                                    <div className="mb-6 flex items-center gap-2 border-b border-gray-100 pb-4">
-                                        <Edit3 size={18} className="text-orange-600" />
-                                        <h2 className="text-lg font-bold text-gray-900">İçerik Düzenleme</h2>
+                        <div className="w-full max-w-5xl mx-auto space-y-12 pb-20">
+                            {/* TOP: THE FORM */}
+                            <div className="w-full flex flex-col animate-in fade-in slide-in-from-bottom-4 duration-500">
+                                <div className="bg-white rounded-3xl shadow-sm border border-orange-100 p-8 md:p-10">
+                                    <div className="mb-8 flex items-center justify-between border-b border-gray-100 pb-6">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 rounded-2xl bg-orange-50 flex items-center justify-center text-orange-600">
+                                                <Edit3 size={20} />
+                                            </div>
+                                            <div>
+                                                <h2 className="text-xl font-bold text-gray-900">İçerik Düzenleme</h2>
+                                                <p className="text-xs text-gray-400 mt-0.5">Lütfen aşağıdaki alanları doldurun ve yukarıdan kaydedin.</p>
+                                            </div>
+                                        </div>
                                     </div>
 
-                                    <div className="grid grid-cols-1 gap-y-5">
+                                    <div className="grid grid-cols-1 gap-y-8">
                                         {activeSection && content[activeSection] && (
                                             <>
                                                 {activeSection === 'services' || activeSection === 'servicesMeta' ? (
-                                                    <div className="col-span-full space-y-8">
-                                                        <div>
-                                                            <h3 className="bg-gray-100 text-gray-700 px-3 py-1 inline-block rounded-md text-xs font-bold tracking-wider mb-4 border border-gray-200">BAŞLIKLAR BÖLÜMÜ</h3>
-                                                            <div className="grid grid-cols-1 gap-y-5">
+                                                    <div className="col-span-full space-y-10">
+                                                        <div className="bg-gray-50/50 p-6 rounded-2xl border border-gray-100">
+                                                            <h3 className="bg-white text-gray-700 px-4 py-1.5 inline-block rounded-lg text-[10px] font-black tracking-widest mb-6 border border-gray-200 uppercase">BAŞLIKLAR BÖLÜMÜ</h3>
+                                                            <div className="grid grid-cols-1 gap-y-6">
                                                                 {renderFields(content.servicesMeta, ['servicesMeta'])}
                                                             </div>
                                                         </div>
-                                                        <div className="pt-6 border-t border-gray-200">
-                                                            <h3 className="bg-gray-100 text-gray-700 px-3 py-1 inline-block rounded-md text-xs font-bold tracking-wider mb-4 border border-gray-200">HİZMET LİSTESİ BÖLÜMÜ</h3>
-                                                            <div className="grid grid-cols-1 gap-y-5">
+                                                        <div className="bg-gray-50/50 p-6 rounded-2xl border border-gray-100">
+                                                            <h3 className="bg-white text-gray-700 px-4 py-1.5 inline-block rounded-lg text-[10px] font-black tracking-widest mb-6 border border-gray-200 uppercase">HİZMET LİSTESİ BÖLÜMÜ</h3>
+                                                            <div className="grid grid-cols-1 gap-y-6">
                                                                 {renderFields(content.services, ['services'])}
                                                             </div>
                                                         </div>
                                                     </div>
                                                 ) : activeSection === 'projects' || activeSection === 'projectsMeta' ? (
-                                                    <div className="col-span-full space-y-8">
-                                                        <div>
-                                                            <h3 className="bg-gray-100 text-gray-700 px-3 py-1 inline-block rounded-md text-xs font-bold tracking-wider mb-4 border border-gray-200">BAŞLIKLAR BÖLÜMÜ</h3>
-                                                            <div className="grid grid-cols-1 gap-y-5">
+                                                    <div className="col-span-full space-y-10">
+                                                        <div className="bg-gray-50/50 p-6 rounded-2xl border border-gray-100">
+                                                            <h3 className="bg-white text-gray-700 px-4 py-1.5 inline-block rounded-lg text-[10px] font-black tracking-widest mb-6 border border-gray-200 uppercase">BAŞLIKLAR BÖLÜMÜ</h3>
+                                                            <div className="grid grid-cols-1 gap-y-6">
                                                                 {renderFields(content.projectsMeta, ['projectsMeta'])}
                                                             </div>
                                                         </div>
-                                                        <div className="pt-6 border-t border-gray-200">
-                                                            <h3 className="bg-gray-100 text-gray-700 px-3 py-1 inline-block rounded-md text-xs font-bold tracking-wider mb-4 border border-gray-200">PROJE LİSTESİ BÖLÜMÜ</h3>
-                                                            <div className="grid grid-cols-1 gap-y-5">
+                                                        <div className="bg-gray-50/50 p-6 rounded-2xl border border-gray-100">
+                                                            <h3 className="bg-white text-gray-700 px-4 py-1.5 inline-block rounded-lg text-[10px] font-black tracking-widest mb-6 border border-gray-200 uppercase">PROJE LİSTESİ BÖLÜMÜ</h3>
+                                                            <div className="grid grid-cols-1 gap-y-6">
                                                                 {renderFields(content.projects, ['projects'])}
                                                             </div>
                                                         </div>
                                                     </div>
                                                 ) : activeSection === 'testimonials' || activeSection === 'testimonialsMeta' ? (
-                                                    <div className="col-span-full space-y-8">
-                                                        <div>
-                                                            <h3 className="bg-gray-100 text-gray-700 px-3 py-1 inline-block rounded-md text-xs font-bold tracking-wider mb-4 border border-gray-200 uppercase">BAŞLIKLAR BÖLÜMÜ</h3>
-                                                            <div className="grid grid-cols-1 gap-y-5">
+                                                    <div className="col-span-full space-y-10">
+                                                        <div className="bg-gray-50/50 p-6 rounded-2xl border border-gray-100">
+                                                            <h3 className="bg-white text-gray-700 px-4 py-1.5 inline-block rounded-lg text-[10px] font-black tracking-widest mb-6 border border-gray-200 uppercase text-center w-full">BAŞLIKLAR BÖLÜMÜ</h3>
+                                                            <div className="grid grid-cols-1 gap-y-6">
                                                                 {renderFields(content.testimonialsMeta, ['testimonialsMeta'])}
                                                             </div>
                                                         </div>
-                                                        <div className="pt-6 border-t border-gray-200">
-                                                            <h3 className="bg-gray-100 text-gray-700 px-3 py-1 inline-block rounded-md text-xs font-bold tracking-wider mb-4 border border-gray-200 uppercase">YORUM LİSTESİ BÖLÜMÜ</h3>
-                                                            <div className="grid grid-cols-1 gap-y-5">
+                                                        <div className="bg-gray-50/50 p-6 rounded-2xl border border-gray-100">
+                                                            <h3 className="bg-white text-gray-700 px-4 py-1.5 inline-block rounded-lg text-[10px] font-black tracking-widest mb-6 border border-gray-200 uppercase text-center w-full">YORUM LİSTESİ BÖLÜMÜ</h3>
+                                                            <div className="grid grid-cols-1 gap-y-6">
                                                                 {renderFields(content.testimonials, ['testimonials'])}
                                                             </div>
                                                         </div>
                                                     </div>
                                                 ) : activeSection === 'gallery' ? (
-                                                    <div className="col-span-full space-y-6">
-                                                        <div className="flex items-center justify-between mb-4">
-                                                            <h3 className="bg-gray-100 text-gray-700 px-3 py-1 inline-block rounded-md text-xs font-bold tracking-wider border border-gray-200 uppercase">Görsel Listesi</h3>
+                                                    <div className="col-span-full space-y-8">
+                                                        <div className="flex items-center justify-between mb-4 px-2">
+                                                            <div>
+                                                                <h3 className="text-sm font-bold text-gray-900">Görsel Listesi</h3>
+                                                                <p className="text-[10px] text-gray-400 mt-0.5">Maksimum {(content.systemSettings?.maxGalleryImages !== undefined && content.systemSettings?.maxGalleryImages !== null && content.systemSettings?.maxGalleryImages !== '') ? content.systemSettings.maxGalleryImages : '30'} resim ekleyebilirsiniz.</p>
+                                                            </div>
                                                             <button
                                                                 onClick={() => setShowGalleryPicker(true)}
-                                                                disabled={content.gallery?.length >= 30}
-                                                                className="flex items-center gap-2 bg-orange-600 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-md hover:bg-orange-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                                                disabled={content.gallery?.length >= parseInt((content.systemSettings?.maxGalleryImages !== undefined && content.systemSettings?.maxGalleryImages !== null && content.systemSettings?.maxGalleryImages !== '') ? content.systemSettings.maxGalleryImages : '30')}
+                                                                className="flex items-center gap-2 bg-orange-600 text-white px-5 py-2.5 rounded-2xl text-xs font-bold shadow-lg shadow-orange-500/10 hover:bg-orange-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed active:scale-95"
                                                             >
-                                                                <Plus size={14} /> {content.gallery?.length >= 30 ? 'Limit Doldu (Maks. 30)' : 'Yeni Ekle (Kütüphaneden)'}
+                                                                <Plus size={14} /> Yeni Ekle
                                                             </button>
                                                         </div>
 
-                                                        <div className="grid grid-cols-2 gap-4">
+                                                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                                                             {(content.gallery || []).map((item: { img: string, alt: string }, idx: number) => (
-                                                                <div key={idx} className="group relative rounded-2xl overflow-hidden border border-gray-200 bg-gray-50 aspect-video">
-                                                                    <img src={item.img} alt={item.alt} className="w-full h-full object-cover" />
-                                                                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                                                                <div key={idx} className="group relative rounded-2xl overflow-hidden border border-gray-100 bg-gray-50 aspect-square shadow-sm transition-all hover:shadow-md">
+                                                                    <img src={item.img} alt={item.alt} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                                                                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 border-4 border-white">
                                                                         <button
                                                                             onClick={() => {
                                                                                 const newGallery = [...content.gallery];
                                                                                 newGallery.splice(idx, 1);
                                                                                 handleChange(['gallery'], newGallery);
                                                                             }}
-                                                                            className="p-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors shadow-lg"
+                                                                            className="p-3 bg-red-500 text-white rounded-xl hover:bg-red-600 transition-colors shadow-lg active:scale-90"
                                                                             title="Kaldır"
                                                                         >
-                                                                            <Trash2 size={16} />
+                                                                            <Trash2 size={18} />
                                                                         </button>
                                                                     </div>
                                                                 </div>
@@ -2266,8 +3126,9 @@ export default function AdminPage() {
                                                         {showGalleryPicker && (
                                                             <MediaPicker
                                                                 onSelect={(url) => {
-                                                                    if ((content.gallery || []).length >= 30) {
-                                                                        setMessage({ type: 'error', text: 'Galeriye en fazla 30 resim ekleyebilirsiniz.' });
+                                                                    const maxImages = parseInt((content.systemSettings?.maxGalleryImages !== undefined && content.systemSettings?.maxGalleryImages !== null && content.systemSettings?.maxGalleryImages !== '') ? content.systemSettings.maxGalleryImages : '30');
+                                                                    if ((content.gallery || []).length >= maxImages) {
+                                                                        setMessage({ type: 'error', text: `Galeriye en fazla ${maxImages} resim ekleyebilirsiniz.` });
                                                                         setShowGalleryPicker(false);
                                                                         return;
                                                                     }
@@ -2280,7 +3141,9 @@ export default function AdminPage() {
                                                         )}
                                                     </div>
                                                 ) : (
-                                                    renderFields(content[activeSection], [activeSection])
+                                                    <div className="space-y-6">
+                                                        {renderFields(content[activeSection], [activeSection])}
+                                                    </div>
                                                 )}
 
                                                 {typeof content[activeSection] !== 'object' && (
@@ -2292,7 +3155,7 @@ export default function AdminPage() {
                                                             type="text"
                                                             value={content[activeSection]}
                                                             onChange={(e) => handleChange([activeSection], e.target.value)}
-                                                            className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none text-sm"
+                                                            className="w-full p-4 bg-gray-50 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-orange-500/10 focus:border-orange-500 outline-none text-sm transition-all shadow-inner"
                                                         />
                                                     </div>
                                                 )}
@@ -2302,47 +3165,46 @@ export default function AdminPage() {
                                 </div>
                             </div>
 
-                            {/* RIGHT COLUMN: LIVE COMPONENT PREVIEW */}
-                            <div className="w-full lg:w-1/2 flex flex-col h-[calc(100vh-8rem)] sticky top-24">
-                                <div className="bg-white rounded-2xl shadow-xl border border-gray-200/80 overflow-hidden flex flex-col h-full ring-1 ring-black/5">
+                            {/* BOTTOM: LIVE COMPONENT PREVIEW */}
+                            <div className="w-full flex flex-col animate-in fade-in slide-in-from-bottom-8 duration-700">
+                                <div className="mb-6 flex items-center gap-3 px-2">
+                                    <div className="w-8 h-8 rounded-xl bg-blue-50 flex items-center justify-center text-blue-500">
+                                        <Monitor size={16} />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-md font-bold text-gray-900">Canlı Önizleme</h3>
+                                        <p className="text-[10px] text-gray-400 mt-0.5 uppercase tracking-widest font-bold">Gerçek zamanlı görünüm</p>
+                                    </div>
+                                </div>
+
+                                <div className="bg-white rounded-[2rem] shadow-2xl shadow-[#2D2926]/5 border border-gray-100 overflow-hidden flex flex-col ring-1 ring-black/5">
                                     {/* Compact browser chrome */}
-                                    <div className="bg-gray-50 border-b border-gray-200/60 px-3 py-1.5 flex items-center gap-3 flex-shrink-0">
-                                        <div className="flex gap-1.5">
-                                            <div className="w-2 h-2 rounded-full bg-[#FF5F56]"></div>
-                                            <div className="w-2 h-2 rounded-full bg-[#FFBD2E]"></div>
-                                            <div className="w-2 h-2 rounded-full bg-[#27C93F]"></div>
+                                    <div className="bg-gray-50/80 backdrop-blur-md border-b border-gray-100 px-4 py-3 flex items-center gap-4 flex-shrink-0">
+                                        <div className="flex gap-2">
+                                            <div className="w-2.5 h-2.5 rounded-full bg-[#FF5F56]"></div>
+                                            <div className="w-2.5 h-2.5 rounded-full bg-[#FFBD2E]"></div>
+                                            <div className="w-2.5 h-2.5 rounded-full bg-[#27C93F]"></div>
                                         </div>
-                                        <div className="flex-1 flex justify-center">
-                                            <span className="text-[9px] text-gray-400 font-medium tracking-wide">mitraevent.com</span>
+                                        <div className="flex-1 bg-white border border-gray-200 rounded-lg py-1 px-4 flex justify-center max-w-sm mx-auto shadow-inner">
+                                            <span className="text-[10px] text-gray-400 font-medium tracking-wide">mitraevent.com/{activeSection}</span>
                                         </div>
-                                        <span className="text-[8px] text-gray-300 font-medium flex items-center gap-1">
-                                            <span className="w-1 h-1 rounded-full bg-green-400 animate-pulse"></span>
-                                            CANLI
-                                        </span>
+                                        <div className="flex items-center gap-2">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
+                                            <span className="text-[9px] text-gray-400 font-bold uppercase tracking-widest">Canlı</span>
+                                        </div>
                                     </div>
 
-                                    <div className="flex-1 overflow-hidden relative w-full flex flex-col items-center bg-gray-50/50">
-                                        <div
-                                            className="w-full bg-white shadow-sm rounded-sm overflow-y-auto origin-top transition-all duration-500 custom-scrollbar-minimal"
-                                            style={{
-                                                transform: 'scale(0.75)',
-                                                height: `${100 / 0.75}%`,
-                                                width: `${100 / 0.75}%`,
-                                                maxHeight: 'none'
-                                            }}
-                                        >
+                                    <div className="p-1 md:p-4 bg-gray-50/30">
+                                        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden relative w-full">
                                             <div className="relative pointer-events-none select-none">
                                                 {renderPreview()}
-                                                <div className="absolute inset-0 z-50 pointer-events-auto cursor-default" title="Form üzerinden düzenleyebilirsiniz."></div>
+                                                <div className="absolute inset-0 z-50 pointer-events-auto cursor-default"></div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
-                                <p className="text-center text-[10px] text-gray-400 mt-3 flex items-center justify-center gap-2 font-medium tracking-widest uppercase">
-                                    <Monitor size={10} /> Önizleme · %75 ölçek
-                                </p>
                             </div>
-                        </>
+                        </div>
                     )}
 
                 </div>

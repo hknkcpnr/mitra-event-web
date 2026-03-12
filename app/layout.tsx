@@ -1,28 +1,40 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import VisitorTracker from "./components/VisitorTracker";
-import fs from "fs";
-import path from "path";
+import { prisma } from "@/lib/prisma";
 
-function getMetaData() {
+/**
+ * Veritabanından SEO ve Meta bilgilerini çeker.
+ */
+async function getMetaData() {
   try {
-    const filePath = path.join(process.cwd(), "data", "content.json");
-    const raw = fs.readFileSync(filePath, "utf-8");
-    const data = JSON.parse(raw);
-    return data.meta || {};
-  } catch {
-    return {};
+    const contentRecord = await prisma.content.findUnique({
+      where: { key: "site_content" },
+    });
+    if (contentRecord) {
+      const data = JSON.parse(contentRecord.value);
+      return data.meta || {};
+    }
+  } catch (error) {
+    console.error("Layout metadata error:", error);
   }
+  return {};
 }
+/**
+ * Tarayıcı tema rengini dinamik olarak ayarlar.
+ */
 export async function generateViewport() {
-  const meta = getMetaData();
+  const meta = await getMetaData();
   return {
     themeColor: meta.themeColor || "#2D2926",
   };
 }
 
+/**
+ * Sitenin tüm SEO başlıklarını, açıklamalarını ve ikonlarını oluşturur.
+ */
 export async function generateMetadata() {
-  const meta = getMetaData();
+  const meta = await getMetaData();
 
   return {
     metadataBase: new URL("https://mitraevent.com"),
@@ -48,6 +60,9 @@ export async function generateMetadata() {
   };
 }
 
+/**
+ * Uygulamanın ana iskeletini (HTML/Body) ve global bileşenlerini (Tracker) tanımlar.
+ */
 export default function RootLayout({
   children,
 }: Readonly<{

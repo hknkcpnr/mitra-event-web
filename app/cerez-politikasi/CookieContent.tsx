@@ -5,22 +5,10 @@ import NavBar from '../components/NavBar';
 import Footer from '../components/Footer';
 
 export default function CookieContent({ siteData }: { siteData: any }) {
-    const [isMenuOpen, setIsMenuOpen] = useState(false);
-    const [scrolled, setScrolled] = useState(false);
-
-    useEffect(() => {
-        const handleScroll = () => setScrolled(window.scrollY > 50);
-        window.addEventListener('scroll', handleScroll);
-        setScrolled(window.scrollY > 50);
-        return () => window.removeEventListener('scroll', handleScroll);
-    }, []);
 
     return (
         <div className="min-h-screen bg-[#FDFCFB] text-[#2D2926] font-sans">
             <NavBar
-                isMenuOpen={isMenuOpen}
-                setIsMenuOpen={setIsMenuOpen}
-                scrolled={scrolled || isMenuOpen}
                 whatsappUrl={siteData.contact.whatsappUrl}
                 brand={siteData.brand}
             />

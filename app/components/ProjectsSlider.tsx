@@ -21,6 +21,11 @@ interface ProjectsSliderProps {
     showIndex?: boolean;
 }
 
+/**
+ * Proje Kaydırıcı (Slider) Bileşeni
+ * Yapılan projeleri yatay eksende kaydırılabilir kartlar halinde sergiler.
+ * Özel kaydırma kontrolleri (sağ/sol) ve estetik geçiş efektleri içerir.
+ */
 const ProjectsSlider: React.FC<ProjectsSliderProps> = ({ data, meta, showIndex }) => {
     const scrollContainerRef = useRef<HTMLDivElement>(null);
 

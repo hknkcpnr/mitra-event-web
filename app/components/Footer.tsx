@@ -21,6 +21,11 @@ interface FooterProps {
     };
 }
 
+/**
+ * Site Alt Bilgi (Footer) Bileşeni
+ * Marka bilgilerini, iletişim linklerini, sosyal medya hesaplarını ve
+ * kurumsal yasal linkleri (KVKK, Çerez Politikası) görüntüler.
+ */
 const Footer: React.FC<FooterProps> = ({ data, brand }) => {
     const currentYear = new Date().getFullYear();
 

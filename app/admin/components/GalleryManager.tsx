@@ -1,14 +1,33 @@
 import React, { useState, useEffect } from 'react';
 import { Trash2, Image as ImageIcon, Loader2, AlertCircle, CheckCircle, Upload, Plus } from 'lucide-react';
 
-export default function GalleryManager() {
-    const [images, setImages] = useState<{ name: string, size: number }[]>([]);
+interface GalleryManagerProps {
+    settings?: {
+        maxImageSize?: string;
+        maxGalleryImages?: string;
+        allowedImageFormats?: string;
+    }
+}
+
+/**
+ * Galeri Yönetim Bileşeni
+ * Bağımsız olarak resim yükleme ve silme işlemlerini yönetir.
+ */
+export default function GalleryManager({ settings }: GalleryManagerProps) {
+    const [images, setImages] = useState<{ id?: string; name: string; url: string; size: number; publicId?: string }[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isUploading, setIsUploading] = useState(false);
     const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
     const [mounted, setMounted] = useState(false);
     const fileInputRef = React.useRef<HTMLInputElement>(null);
 
+    const maxGalleryImages = parseInt((settings?.maxGalleryImages !== undefined && settings?.maxGalleryImages !== null && settings?.maxGalleryImages !== '') ? settings.maxGalleryImages : '30');
+    const maxImageSizeMB = parseInt((settings?.maxImageSize !== undefined && settings?.maxImageSize !== null && settings?.maxImageSize !== '') ? settings.maxImageSize : '10');
+    const allowedFormats = settings?.allowedImageFormats || '.jpg,.jpeg,.png,.webp,.gif';
+
+    /**
+     * Mevcut galeri resimlerini veritabanından çeker
+     */
     const fetchImages = async () => {
         setIsLoading(true);
         console.log('Fetching gallery images...');
@@ -35,6 +54,9 @@ export default function GalleryManager() {
 
     if (!mounted) return null;
 
+    /**
+     * Dosya boyutunu okunabilir formata çevirir (KB/MB)
+     */
     const formatBytes = (bytes: number) => {
         if (bytes === 0) return '0 KB';
         const k = 1024;
@@ -45,10 +67,12 @@ export default function GalleryManager() {
         return mb.toFixed(2) + ' MB';
     };
 
+    /**
+     * Sunucuya yeni resim yükleme işlemini gerçekleştirir
+     */
     const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const MAX_IMAGES = 30;
-        if (images.length >= MAX_IMAGES) {
-            setMessage({ type: 'error', text: `Maksimum ${MAX_IMAGES} resim sınırına ulaşıldı.` });
+        if (images.length >= maxGalleryImages) {
+            setMessage({ type: 'error', text: `Maksimum ${maxGalleryImages} resim sınırına ulaşıldı.` });
             return;
         }
 
@@ -59,17 +83,17 @@ export default function GalleryManager() {
         setMessage(null);
 
         // Client-side validation
-        const MAX_SIZE = 10 * 1024 * 1024;
+        const MAX_SIZE = maxImageSizeMB * 1024 * 1024;
         if (file.size > MAX_SIZE) {
-            setMessage({ type: 'error', text: 'Dosya boyutu maksimum 10 MB olabilir.' });
+            setMessage({ type: 'error', text: `Dosya boyutu maksimum ${maxImageSizeMB} MB olabilir.` });
             return;
         }
 
-        const allowedExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp'];
+        const allowedExtensions = allowedFormats.split(',').map(s => s.trim().toLowerCase());
         const extMatch = file.name.match(/\.[0-9a-z]+$/i);
         const extName = extMatch ? extMatch[0].toLowerCase() : '';
         if (!allowedExtensions.includes(extName)) {
-            setMessage({ type: 'error', text: 'Sadece .jpg, .jpeg, .png, .gif, .webp formatları yüklenebilir.' });
+            setMessage({ type: 'error', text: `Sadece ${allowedFormats} formatları yüklenebilir.` });
             return;
         }
 
@@ -97,11 +121,14 @@ export default function GalleryManager() {
         }
     };
 
-    const handleDelete = async (e: React.MouseEvent, filename: string) => {
+    /**
+     * Belirtilen resmi hem Cloudinary hem de veritabanından siler
+     */
+    const handleDelete = async (e: React.MouseEvent, img: any) => {
         e.preventDefault();
         e.stopPropagation();
 
-        console.log('handleDelete triggered for:', filename);
+        console.log('handleDelete triggered for:', img.name);
         if (!confirm('Bu resmi silmek istediğinize emin misiniz?')) {
             console.log('Deletion cancelled by user');
             return;
@@ -109,7 +136,7 @@ export default function GalleryManager() {
 
         console.log('User confirmed, executing API call...');
         try {
-            const url = `/api/gallery?file=${encodeURIComponent(filename)}`;
+            const url = `/api/gallery?id=${encodeURIComponent(img.id || img.name)}&file=${encodeURIComponent(img.name)}`;
             console.log('Request URL:', url);
 
             const res = await fetch(url, {
@@ -121,7 +148,7 @@ export default function GalleryManager() {
             console.log('Response Data:', data);
 
             if (res.ok) {
-                setImages(prev => prev.filter(img => img.name !== filename));
+                setImages(prev => prev.filter(i => i.id ? i.id !== img.id : i.name !== img.name));
                 setMessage({ type: 'success', text: 'Resim başarıyla silindi' });
                 setTimeout(() => setMessage(null), 3000);
             } else {
@@ -148,18 +175,18 @@ export default function GalleryManager() {
                 <div className="bg-orange-50/50 px-5 py-3 rounded-2xl border border-orange-100 flex items-center gap-6">
                     <div>
                         <p className="text-[10px] font-bold text-orange-400 uppercase tracking-widest mb-1">Toplam Resim</p>
-                        <p className={`text-2xl font-bold ${images.length >= 30 ? 'text-red-500' : 'text-orange-700'}`}>
-                            {images.length} <span className="text-sm text-gray-400 font-medium">/ 30</span>
+                        <p className={`text-2xl font-bold ${images.length >= maxGalleryImages ? 'text-red-500' : 'text-orange-700'}`}>
+                            {images.length} <span className="text-sm text-gray-400 font-medium">/ {maxGalleryImages}</span>
                         </p>
                     </div>
                     <div className="h-10 w-px bg-orange-200"></div>
                     <button
                         onClick={() => fileInputRef.current?.click()}
-                        disabled={isUploading || images.length >= 30}
+                        disabled={isUploading || images.length >= maxGalleryImages}
                         className="bg-orange-600 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-md hover:bg-orange-700 transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         {isUploading ? <Loader2 size={16} className="animate-spin" /> : <Plus size={16} />}
-                        {isUploading ? 'Yükleniyor...' : images.length >= 30 ? 'Limit Doldu' : 'Yeni Resim'}
+                        {isUploading ? 'Yükleniyor...' : images.length >= maxGalleryImages ? 'Limit Doldu' : 'Yeni Resim'}
                     </button>
                     <input
                         ref={fileInputRef}
@@ -194,7 +221,7 @@ export default function GalleryManager() {
                             <div key={idx} className="group relative rounded-2xl overflow-hidden border border-gray-200 aspect-square shadow-sm hover:shadow-lg transition-all">
                                 {/* eslint-disable-next-line @next/next/no-img-element */}
                                 <img
-                                    src={`/uploads/${img.name}`}
+                                    src={img.url}
                                     alt={img.name}
                                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110 bg-gray-50"
                                 />
@@ -204,7 +231,7 @@ export default function GalleryManager() {
                                         {formatBytes(img.size)}
                                     </span>
                                     <button
-                                        onClick={(e) => handleDelete(e, img.name)}
+                                        onClick={(e) => handleDelete(e, img)}
                                         className="bg-red-500 text-white p-2 rounded-xl hover:bg-red-600 transition-colors shadow-lg transform translate-y-4 group-hover:translate-y-0 duration-300 pointer-events-auto z-10"
                                         title="Resmi Sil"
                                     >

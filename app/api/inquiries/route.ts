@@ -1,47 +1,31 @@
 import { NextRequest, NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
+import { prisma } from '@/lib/prisma';
 
-const DATA_PATH = path.join(process.cwd(), 'data', 'inquiries.json');
-const ACTIVE_SESSIONS_PATH = path.join(process.cwd(), 'data', 'active_sessions.json');
-const COOKIE_NAME = 'admin_session';
+import { getSessionWithUser } from '@/lib/auth';
 
-function getActiveSessions(): Record<string, string> {
-    try {
-        if (!fs.existsSync(ACTIVE_SESSIONS_PATH)) return {};
-        const raw = fs.readFileSync(ACTIVE_SESSIONS_PATH, 'utf-8');
-        return JSON.parse(raw);
-    } catch {
-        return {};
-    }
-}
-
-function authenticate(request: NextRequest | Request): string | null {
-    // In Next.js, Request objects in API routes can have cookies
-    // but we use NextRequest for better cookie handling.
-    const token = (request as NextRequest).cookies?.get(COOKIE_NAME)?.value;
-    if (!token) return null;
-    const sessions = getActiveSessions();
-    return sessions[token] || null;
-}
-
+/**
+ * Başvuru listesini getiren GET metodu (Yalnızca Admin/Editör).
+ */
 export async function GET(request: NextRequest) {
-    if (!authenticate(request)) {
+    const session = await getSessionWithUser(request);
+    if (!session) {
         return NextResponse.json({ error: 'Yetkisiz erişim.' }, { status: 401 });
     }
 
     try {
-        if (!fs.existsSync(DATA_PATH)) {
-            return NextResponse.json([]);
-        }
-        const data = fs.readFileSync(DATA_PATH, 'utf8');
-        return NextResponse.json(JSON.parse(data));
+        const inquiries = await prisma.inquiry.findMany({
+            orderBy: { createdAt: 'desc' },
+        });
+        return NextResponse.json(inquiries);
     } catch (error) {
         console.error('Error reading inquiries:', error);
         return NextResponse.json({ error: 'Failed to fetch inquiries' }, { status: 500 });
     }
 }
 
+/**
+ * Ziyaretçilerin yeni bir başvuru/talep göndermesini sağlayan POST metodu.
+ */
 export async function POST(request: Request) {
     try {
         const inquiry = await request.json();
@@ -57,22 +41,17 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: 'Mesaj boş olamaz.' }, { status: 400 });
         }
 
-        let inquiries: any[] = [];
-        if (fs.existsSync(DATA_PATH)) {
-            const data = fs.readFileSync(DATA_PATH, 'utf8');
-            inquiries = JSON.parse(data);
-        }
-
-        const newInquiry = {
-            ...inquiry,
-            id: Date.now().toString(),
-            date: new Date().toISOString(),
-            status: 'beklemede',
-            note: '',
-        };
-
-        inquiries.unshift(newInquiry);
-        fs.writeFileSync(DATA_PATH, JSON.stringify(inquiries, null, 2));
+        const newInquiry = await prisma.inquiry.create({
+            data: {
+                name: inquiry.name.trim(),
+                email: inquiry.email.trim().toLowerCase(),
+                phone: inquiry.phone || null,
+                eventType: inquiry.eventType || null,
+                message: inquiry.message.trim(),
+                status: 'beklemede',
+                note: '',
+            },
+        });
 
         return NextResponse.json({ success: true, inquiry: newInquiry });
     } catch (error) {
@@ -81,8 +60,12 @@ export async function POST(request: Request) {
     }
 }
 
+/**
+ * Başvuru durumunu (okundu/not) güncelleyen PATCH metodu.
+ */
 export async function PATCH(request: NextRequest) {
-    if (!authenticate(request)) {
+    const session = await getSessionWithUser(request);
+    if (!session) {
         return NextResponse.json({ error: 'Yetkisiz erişim.' }, { status: 401 });
     }
 
@@ -93,32 +76,27 @@ export async function PATCH(request: NextRequest) {
             return NextResponse.json({ error: 'ID is required' }, { status: 400 });
         }
 
-        if (!fs.existsSync(DATA_PATH)) {
-            return NextResponse.json({ error: 'No inquiries found' }, { status: 404 });
-        }
+        const inquiry = await prisma.inquiry.update({
+            where: { id },
+            data: {
+                ...(status !== undefined && { status }),
+                ...(note !== undefined && { note }),
+            },
+        });
 
-        const data = fs.readFileSync(DATA_PATH, 'utf8');
-        const inquiries: any[] = JSON.parse(data);
-
-        const idx = inquiries.findIndex((inq: any) => inq.id === id);
-        if (idx === -1) {
-            return NextResponse.json({ error: 'Inquiry not found' }, { status: 404 });
-        }
-
-        if (status !== undefined) inquiries[idx].status = status;
-        if (note !== undefined) inquiries[idx].note = note;
-
-        fs.writeFileSync(DATA_PATH, JSON.stringify(inquiries, null, 2));
-
-        return NextResponse.json({ success: true, inquiry: inquiries[idx] });
+        return NextResponse.json({ success: true, inquiry });
     } catch (error) {
         console.error('Error updating inquiry:', error);
         return NextResponse.json({ error: 'Failed to update inquiry' }, { status: 500 });
     }
 }
 
+/**
+ * Bir başvuruyu kalıcı olarak silen DELETE metodu.
+ */
 export async function DELETE(request: NextRequest) {
-    if (!authenticate(request)) {
+    const session = await getSessionWithUser(request);
+    if (!session) {
         return NextResponse.json({ error: 'Yetkisiz erişim.' }, { status: 401 });
     }
 
@@ -130,15 +108,9 @@ export async function DELETE(request: NextRequest) {
             return NextResponse.json({ error: 'ID is required' }, { status: 400 });
         }
 
-        if (!fs.existsSync(DATA_PATH)) {
-            return NextResponse.json({ error: 'No inquiries found' }, { status: 404 });
-        }
-
-        const data = fs.readFileSync(DATA_PATH, 'utf8');
-        let inquiries = JSON.parse(data);
-        inquiries = inquiries.filter((inq: any) => inq.id !== id);
-
-        fs.writeFileSync(DATA_PATH, JSON.stringify(inquiries, null, 2));
+        await prisma.inquiry.delete({
+            where: { id },
+        });
 
         return NextResponse.json({ success: true });
     } catch (error) {

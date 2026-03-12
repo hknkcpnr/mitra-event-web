@@ -1,11 +1,9 @@
 'use client';
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Menu, X, MessageCircle } from 'lucide-react';
+import Image from 'next/image';
 
 interface NavBarProps {
-    isMenuOpen: boolean;
-    setIsMenuOpen: (open: boolean) => void;
-    scrolled: boolean;
     whatsappUrl: string;
     brand: {
         logo: string;
@@ -22,8 +20,22 @@ const navLinks = [
     { label: 'İletişim', href: 'iletişim' },
 ];
 
-const NavBar: React.FC<NavBarProps> = ({ isMenuOpen, setIsMenuOpen, scrolled, whatsappUrl, brand }) => {
+/**
+ * Navigasyon Menüsü (NavBar) Bileşeni
+ * Sayfa genelinde sabit kalarak (sticky) bölümler arası geçişi sağlar.
+ * Kaydırma (scroll) durumuna göre arka plan ve logo değiştirme özelliğine sahiptir.
+ * Mobil menü ve WhatsApp entegrasyonu sunar.
+ */
+const NavBar: React.FC<NavBarProps> = ({ whatsappUrl, brand }) => {
+    const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const [scrolled, setScrolled] = useState(false);
 
+    useEffect(() => {
+        const handleScroll = () => setScrolled(window.scrollY > 50);
+        handleScroll();
+        window.addEventListener('scroll', handleScroll);
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
     const scrollToSection = (id: string, e: React.MouseEvent<HTMLAnchorElement>) => {
         e.preventDefault();
         setIsMenuOpen(false);

@@ -1,6 +1,5 @@
-"use client";
-import React, { useState, useEffect } from 'react';
-
+import React from 'react';
+import { prisma } from '@/lib/prisma';
 import NavBar from './components/NavBar';
 import HeroSection from './components/HeroSection';
 import PhilosophySection from './components/PhilosophySection';
@@ -11,48 +10,70 @@ import GallerySection from './components/GallerySection';
 import InquiryForm from './components/InquiryForm';
 import Footer from './components/Footer';
 
-const App = () => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
-  const [siteData, setSiteData] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+// Use Next.js Revalidate for edge caching if necessary (optional)
+export const revalidate = 60; // 1 dakika önbelleğe alır ve sayfaları fişekler.
 
-  useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 50);
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+/**
+ * Ana Web Sayfası (Landing Page)
+ * Sunucu tarafında (SSR) tüm içerikleri çeker ve bölümleri oluşturur.
+ * Bakım modu aktifse ziyaretçileri bilgilendirme ekranına yönlendirir.
+ */
+const App = async () => {
+  // SSR: Sunucu taraflı içerik çekimi.
+  let siteData = null;
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await fetch('/api/content');
-        if (response.ok) {
-          const data = await response.json();
-          setSiteData(data);
-        } else {
-          console.error("Failed to fetch content data");
-        }
-      } catch (error) {
-        console.error("Error fetching content data:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
-  }, []);
+  try {
+    const contentRow = await prisma.content.findUnique({ where: { key: 'site_content' } });
+    if (contentRow && contentRow.value) {
+        siteData = JSON.parse(contentRow.value);
+    }
+  } catch (error) {
+    console.error("Error fetching content data from Prisma:", error);
+  }
 
-  if (loading || !siteData) {
-    return <div className="min-h-screen flex text-[#2D2926] items-center justify-center font-sans tracking-widest text-sm bg-[#FDFCFB]">YÜKLENİYOR...</div>;
+  if (!siteData || siteData.systemSettings?.maintenanceMode === 'true') {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-[#FDFCFB] text-[#2D2926] font-sans px-6 relative overflow-hidden">
+        {/* Background Decorative Elements */}
+        <div className="absolute inset-0 pointer-events-none opacity-40">
+           <div className="absolute -top-[20%] -right-[10%] w-[50%] h-[50%] bg-[#FFF7ED] rounded-[40%_60%_70%_30%_/_40%_50%_60%_50%] blur-3xl" />
+           <div className="absolute -bottom-[20%] -left-[10%] w-[50%] h-[50%] bg-[#FFF7ED]/60 rounded-[60%_40%_30%_70%_/_50%_60%_50%_40%] blur-3xl" />
+        </div>
+
+        <div className="relative z-10 text-center space-y-8 animate-in fade-in zoom-in duration-700">
+           <div className="h-px w-24 bg-[#2D2926] mx-auto opacity-20"></div>
+           <div>
+              <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-4 lowercase">
+                mitra <span className="font-light text-gray-400">event</span>
+              </h1>
+              <p className="text-xs md:text-sm font-bold tracking-[0.3em] uppercase text-gray-400">Şu an bakımdayız</p>
+           </div>
+           
+           <div className="max-w-md mx-auto">
+              <p className="text-sm text-gray-500 leading-relaxed">
+                Size daha iyi bir deneyim sunabilmek için web sitemizde güncellemeler yapıyoruz. 
+                Çok yakında tekrar yayında olacağız.
+              </p>
+           </div>
+
+           <div className="flex flex-col items-center gap-6 pt-4">
+              <div className="flex items-center gap-4">
+                 <div className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse"></div>
+                 <span className="text-[10px] font-bold uppercase tracking-widest text-[#2D2926]/40">Hazırlanıyor</span>
+              </div>
+              <div className="h-px w-24 bg-[#2D2926] mx-auto opacity-20"></div>
+           </div>
+        </div>
+        
+        <p className="absolute bottom-10 text-[10px] text-gray-400 font-bold uppercase tracking-[0.2em] z-10">© 2026 Mitra Event</p>
+      </div>
+    );
   }
 
   return (
     <div className="min-h-screen bg-[#FDFCFB] text-[#2D2926] font-sans selection:bg-[#E6DDE6]">
       <NavBar
-        isMenuOpen={isMenuOpen}
-        setIsMenuOpen={setIsMenuOpen}
-        scrolled={scrolled}
-        whatsappUrl={siteData.contact.whatsappUrl}
+        whatsappUrl={siteData.contact?.whatsappUrl}
         brand={siteData.brand}
       />
       <HeroSection data={siteData.hero} />

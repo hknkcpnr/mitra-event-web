@@ -10,6 +10,11 @@ interface GallerySectionProps {
     images: GalleryItem[];
 }
 
+/**
+ * Galeri Bölümü Bileşeni
+ * Etkinliklerden karelerin sergilendiği, estetik tasarımlı 
+ * resim ızgarasını (grid) oluşturur.
+ */
 const GallerySection: React.FC<GallerySectionProps> = ({ images }) => {
     if (!images || images.length === 0) return null;
 

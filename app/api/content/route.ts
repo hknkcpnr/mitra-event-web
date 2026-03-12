@@ -1,102 +1,106 @@
 import { NextRequest, NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
+import { prisma } from '@/lib/prisma';
+import { getSessionWithUser } from '@/lib/auth';
 
-const CONTENT_PATH = path.join(process.cwd(), 'data', 'content.json');
-const ACTIVE_SESSIONS_PATH = path.join(process.cwd(), 'data', 'active_sessions.json');
-const COOKIE_NAME = 'admin_session';
+const CONTENT_KEY = 'site_content';
 
-function getActiveSessions(): Record<string, string> {
-    try {
-        if (!fs.existsSync(ACTIVE_SESSIONS_PATH)) return {};
-        const raw = fs.readFileSync(ACTIVE_SESSIONS_PATH, 'utf-8');
-        return JSON.parse(raw);
-    } catch {
-        return {};
+/**
+ * İçerik objesi içindeki tüm resim yollarını (/uploads/) bulur.
+ */
+function getAllUploadPaths(obj: unknown): string[] {
+  const paths: string[] = [];
+  const search = (item: unknown) => {
+    if (!item) return;
+
+    if (typeof item === 'string' && item.startsWith('/uploads/')) {
+      paths.push(item);
+      return;
     }
-}
 
-function authenticate(request: NextRequest): string | null {
-    const token = request.cookies.get(COOKIE_NAME)?.value;
-    if (!token) return null;
-    const sessions = getActiveSessions();
-    return sessions[token] || null;
-}
-
-export async function GET(request: NextRequest) {
-    // Content can be viewed by anyone (public site needs it), 
-    // but we can restrict if needed. Keeping it public for now.
-    try {
-        const fileContents = fs.readFileSync(CONTENT_PATH, 'utf8');
-        const data = JSON.parse(fileContents);
-        return NextResponse.json(data);
-    } catch (error) {
-        console.error('Error reading content file:', error);
-        return NextResponse.json({ error: 'Failed to read content data' }, { status: 500 });
+    if (Array.isArray(item)) {
+      item.forEach(search);
+      return;
     }
+
+    if (typeof item === 'object') {
+      Object.values(item as Record<string, unknown>).forEach(search);
+    }
+  };
+
+  search(obj);
+  return Array.from(new Set(paths));
 }
 
 /**
- * Utility to extract all /uploads/ paths from a JSON object
+ * Veritabanından mevcut site içeriğini okur.
  */
-function getAllUploadPaths(obj: any): string[] {
-    const paths: string[] = [];
-    const search = (item: any) => {
-        if (!item) return;
-        if (typeof item === 'string' && item.startsWith('/uploads/')) {
-            paths.push(item);
-        } else if (Array.isArray(item)) {
-            item.forEach(search);
-        } else if (typeof item === 'object') {
-            Object.values(item).forEach(search);
-        }
-    };
-    search(obj);
-    return Array.from(new Set(paths));
+async function readContentFromDb() {
+  const row = await prisma.content.findUnique({ where: { key: CONTENT_KEY } });
+  if (!row) return null;
+
+  try {
+    return JSON.parse(row.value);
+  } catch {
+    return null;
+  }
 }
 
+/**
+ * Site içeriğini getiren GET metodu.
+ */
+export async function GET() {
+  try {
+    const data = await readContentFromDb();
+    if (!data) {
+      return NextResponse.json({ error: 'Content not found' }, { status: 404 });
+    }
+    return NextResponse.json(data);
+  } catch (error) {
+    console.error('Error reading content:', error);
+    return NextResponse.json({ error: 'Failed to read content data' }, { status: 500 });
+  }
+}
+
+/**
+ * Site içeriğini güncelleyen POST metodu.
+ * Eskiye nazaran silinen resimleri sunucudan temizler.
+ */
 export async function POST(request: NextRequest) {
-    if (!authenticate(request)) {
-        return NextResponse.json({ error: 'Yetkisiz erişim.' }, { status: 401 });
+  const session = await getSessionWithUser(request);
+  if (!session) {
+    return NextResponse.json({ error: 'Yetkisiz erişim.' }, { status: 401 });
+  }
+
+  try {
+    const newData = await request.json();
+    const oldData = (await readContentFromDb()) || {};
+
+    const oldPaths = getAllUploadPaths(oldData);
+    const newPaths = getAllUploadPaths(newData);
+    const abandonedPaths = oldPaths.filter((p) => !newPaths.includes(p));
+
+    for (const relPath of abandonedPaths) {
+      try {
+        const absPath = path.join(process.cwd(), 'public', relPath);
+        if (fs.existsSync(absPath) && absPath.includes(path.join('public', 'uploads'))) {
+          fs.unlinkSync(absPath);
+        }
+      } catch (err) {
+        console.error(`Failed to delete abandoned image ${relPath}:`, err);
+      }
     }
 
-    try {
-        const newData = await request.json();
+    await prisma.content.upsert({
+      where: { key: CONTENT_KEY },
+      update: { value: JSON.stringify(newData) },
+      create: { key: CONTENT_KEY, value: JSON.stringify(newData) },
+    });
 
-        // 1. Read old data to find abandoned images
-        let oldData = {};
-        try {
-            if (fs.existsSync(CONTENT_PATH)) {
-                oldData = JSON.parse(fs.readFileSync(CONTENT_PATH, 'utf8'));
-            }
-        } catch (e) {
-            console.error("Error reading old content for cleanup:", e);
-        }
-
-        const oldPaths = getAllUploadPaths(oldData);
-        const newPaths = getAllUploadPaths(newData);
-
-        // 2. Identify and delete abandoned images
-        const abandonedPaths = oldPaths.filter(p => !newPaths.includes(p));
-
-        for (const relPath of abandonedPaths) {
-            try {
-                // Ensure we only delete from the public/uploads directory
-                const absPath = path.join(process.cwd(), 'public', relPath);
-                if (fs.existsSync(absPath) && absPath.includes(path.join('public', 'uploads'))) {
-                    fs.unlinkSync(absPath);
-                    console.log(`Successfully deleted abandoned image: ${relPath}`);
-                }
-            } catch (err) {
-                console.error(`Failed to delete abandoned image ${relPath}:`, err);
-            }
-        }
-
-        // 3. Save new data
-        fs.writeFileSync(CONTENT_PATH, JSON.stringify(newData, null, 2), 'utf8');
-        return NextResponse.json({ message: 'Content updated successfully' });
-    } catch (error) {
-        console.error('Error writing content file:', error);
-        return NextResponse.json({ error: 'Failed to update content data' }, { status: 500 });
-    }
+    return NextResponse.json({ message: 'Content updated successfully' });
+  } catch (error) {
+    console.error('Error writing content:', error);
+    return NextResponse.json({ error: 'Failed to update content data' }, { status: 500 });
+  }
 }

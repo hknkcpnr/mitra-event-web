@@ -1,5 +1,6 @@
 import React from 'react';
 import { ArrowRight } from 'lucide-react';
+import Image from 'next/image';
 
 interface HeroData {
     badgeTitle: string;
@@ -17,6 +18,11 @@ interface HeroSectionProps {
     data: HeroData;
 }
 
+/**
+ * Hero (Giriş) Bölümü Bileşeni
+ * Sayfanın en üstünde yer alan ana karşılama alanıdır.
+ * Büyük başlıklar, açıklama metni ve estetik bir resim dizimi (puzzle grid) içerir.
+ */
 const HeroSection: React.FC<HeroSectionProps> = ({ data }) => {
     return (
         <section className="relative min-h-screen flex items-center px-6 md:px-12 pt-28 pb-20 overflow-hidden">
@@ -50,28 +56,37 @@ const HeroSection: React.FC<HeroSectionProps> = ({ data }) => {
                     <div className="grid grid-cols-12 grid-rows-12 gap-4 h-[600px] md:h-[750px] animate-puzzleReveal">
                         {/* Piece 1: Large Center-Left */}
                         <div className="col-span-7 row-span-8 overflow-hidden rounded-3xl shadow-2xl relative group">
-                            <img
-                                src={data.images[0]?.url || ''}
+                            <Image
+                                src={data.images[0]?.url || '/placeholder.jpg'}
                                 alt={data.images[0]?.alt || ''}
+                                fill
+                                sizes="(max-width: 768px) 100vw, 50vw"
+                                priority
                                 className="w-full h-full object-cover animate-zoom-in origin-center"
                             />
                             <div className="absolute inset-0 bg-[#A68BA6]/10 mix-blend-multiply opacity-0 group-hover:opacity-100 transition-opacity"></div>
                         </div>
 
                         {/* Piece 2: Top Right Small */}
-                        <div className="col-span-5 row-span-4 overflow-hidden rounded-3xl shadow-xl mt-8">
-                            <img
-                                src={data.images[1]?.url || ''}
+                        <div className="col-span-5 row-span-4 overflow-hidden rounded-3xl shadow-xl mt-8 relative">
+                            <Image
+                                src={data.images[1]?.url || '/placeholder.jpg'}
                                 alt={data.images[1]?.alt || ''}
+                                fill
+                                sizes="(max-width: 768px) 100vw, 30vw"
+                                loading="lazy"
                                 className="w-full h-full object-cover animate-zoom-out origin-top-right"
                             />
                         </div>
 
                         {/* Piece 3: Bottom Right Long */}
-                        <div className="col-span-5 row-span-7 overflow-hidden rounded-3xl shadow-xl -mt-4">
-                            <img
-                                src={data.images[2]?.url || ''}
+                        <div className="col-span-5 row-span-7 overflow-hidden rounded-3xl shadow-xl -mt-4 relative">
+                            <Image
+                                src={data.images[2]?.url || '/placeholder.jpg'}
                                 alt={data.images[2]?.alt || ''}
+                                fill
+                                sizes="(max-width: 768px) 100vw, 30vw"
+                                loading="lazy"
                                 className="w-full h-full object-cover animate-zoom-in origin-bottom-left"
                             />
                         </div>

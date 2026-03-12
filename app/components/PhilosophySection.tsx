@@ -12,6 +12,11 @@ interface PhilosophySectionProps {
     data: PhilosophyData;
 }
 
+/**
+ * Vizyon/Felsefe Bölümü Bileşeni
+ * Markanın duruşunu ve yaklaşımını estetik bir alıntı (quote) ve
+ * açıklama metni ile ziyaretçiye sunar.
+ */
 const PhilosophySection: React.FC<PhilosophySectionProps> = ({ data }) => {
     return (
         <section id="kürasyon" className="relative scroll-mt-24 min-h-[80vh] flex flex-col justify-center py-32 px-6 bg-white border-y border-stone-100 overflow-hidden">
@@ -21,9 +26,9 @@ const PhilosophySection: React.FC<PhilosophySectionProps> = ({ data }) => {
                     <img
                         src={data.bgImage}
                         alt="Background"
-                        className="w-full h-full object-cover opacity-[0.05]"
+                        className="w-full h-full object-cover opacity-[0.15]"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-b from-white via-transparent to-white opacity-40"></div>
+                    <div className="absolute inset-0 bg-gradient-to-b from-white/80 via-transparent to-white/80"></div>
                 </div>
             )}
 

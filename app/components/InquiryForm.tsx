@@ -1,3 +1,4 @@
+"use client";
 import React from 'react';
 import { Mail, Phone } from 'lucide-react';
 
@@ -20,6 +21,12 @@ interface InquiryFormProps {
     data: ContactData;
 }
 
+/**
+ * Başvuru Formu (İletişim) Bileşeni
+ * Ziyaretçilerin isim, e-posta, telefon ve mesaj bilgilerini alarak
+ * sisteme yeni bir başvuru/talep (Inquiry) eklemesini sağlar.
+ * KVKK onayı ve WhatsApp entegrasyonu içerir.
+ */
 const InquiryForm: React.FC<InquiryFormProps> = ({ data }) => {
     const [formData, setFormData] = React.useState({
         name: '',

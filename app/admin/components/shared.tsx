@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Monitor, Type, Briefcase, Users, Camera, Phone, Mail, Settings, X, Save, Loader2, Upload, ImageIcon, AlertCircle, Layout, Globe, Image as GalleryIcon, Download, Search, LayoutGrid, Check } from "lucide-react";
+import { Monitor, Type, Briefcase, Users, Camera, Phone, Mail, Settings, X, Save, Loader2, Upload, ImageIcon, AlertCircle, Layout, Globe, Image as GalleryIcon, Download, Search, LayoutGrid, Check, Trash2 } from "lucide-react";
 
 export const sectionConfig: Record<string, { label: string, icon: React.ReactNode }> = {
     hero: { label: "Banner (Ana Ekran)", icon: <Monitor size={16} /> },
@@ -18,6 +18,7 @@ export const statusConfig: Record<string, { label: string; color: string; bg: st
     beklemede: { label: 'Beklemede', color: 'text-amber-700', bg: 'bg-amber-50 border-amber-200', dot: 'bg-amber-400' },
     olumlu: { label: 'Olumlu', color: 'text-green-700', bg: 'bg-green-50 border-green-200', dot: 'bg-green-500' },
     olumsuz: { label: 'Olumsuz', color: 'text-red-700', bg: 'bg-red-50 border-red-200', dot: 'bg-red-500' },
+    okundu: { label: 'Okundu', color: 'text-gray-700', bg: 'bg-gray-50 border-gray-200', dot: 'bg-gray-400' },
 };
 
 export const InquiryCard = ({ inq, onUpdate, onDelete }: { inq: any, onUpdate: (id: string, s: string, n: string) => Promise<void>, onDelete: (id: string) => void }) => {
@@ -65,11 +66,19 @@ export const InquiryCard = ({ inq, onUpdate, onDelete }: { inq: any, onUpdate: (
 
                 {/* Tarih */}
                 <span className="text-[11px] text-gray-400 whitespace-nowrap flex-shrink-0">
-                    {new Date(inq.date).toLocaleDateString('tr-TR', { day: '2-digit', month: 'short', year: 'numeric' })}
+                    {inq.createdAt ? new Date(inq.createdAt).toLocaleDateString('tr-TR', { day: '2-digit', month: 'short', year: 'numeric' }) : '---'}
                 </span>
 
                 {/* Islemler */}
                 <div className="flex items-center gap-2 flex-shrink-0">
+                    {localStatus === 'beklemede' && (
+                        <button
+                            onClick={() => { setLocalStatus('okundu'); onUpdate(inq.id, 'okundu', localNote); }}
+                            className="px-4 py-2 rounded-xl bg-orange-50 text-orange-600 text-[10px] font-black uppercase tracking-widest hover:bg-orange-600 hover:text-white transition-all shadow-sm active:scale-95"
+                        >
+                            OKUNDU İŞARETLE
+                        </button>
+                    )}
                     <button
                         onClick={() => setExpanded(!expanded)}
                         className="p-2 rounded-lg text-gray-400 hover:text-[#F97316] hover:bg-[#FFF7ED]/30 transition-colors"
@@ -82,7 +91,7 @@ export const InquiryCard = ({ inq, onUpdate, onDelete }: { inq: any, onUpdate: (
                         className="p-2 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
                         title="Sil"
                     >
-                        <X size={16} />
+                        <Trash2 size={16} />
                     </button>
                 </div>
             </div>
@@ -178,7 +187,7 @@ export const MiniBarChart = ({ data, color }: { data: number[], color: string })
 
 
 export const MediaPicker = ({ onSelect, onClose }: { onSelect: (url: string) => void, onClose: () => void }) => {
-    const [images, setImages] = useState<{ name: string, size: number }[]>([]);
+    const [images, setImages] = useState<{ id: string, name: string, url: string, size: number }[]>([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState("");
 
@@ -244,11 +253,11 @@ export const MediaPicker = ({ onSelect, onClose }: { onSelect: (url: string) => 
                             {filtered.map((img, idx) => (
                                 <button
                                     key={idx}
-                                    onClick={() => onSelect(`/uploads/${img.name}`)}
+                                    onClick={() => onSelect(img.url)}
                                     className="group relative aspect-square rounded-2xl overflow-hidden border border-gray-200 bg-white hover:border-orange-500 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
                                 >
                                     <img
-                                        src={`/uploads/${img.name}`}
+                                        src={img.url}
                                         alt={img.name}
                                         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                                     />
@@ -266,7 +275,7 @@ export const MediaPicker = ({ onSelect, onClose }: { onSelect: (url: string) => 
     );
 };
 
-export const ImageUploadField = ({ value, onChange, label }: { value: string, onChange: (newPath: string) => void, label: string }) => {
+export const ImageUploadField = ({ value, onChange, label, maxSizeMB = 10, allowedFormats = '.jpg,.jpeg,.png,.gif,.webp' }: { value: string, onChange: (newPath: string) => void, label: string, maxSizeMB?: number, allowedFormats?: string }) => {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [isUploading, setIsUploading] = useState(false);
     const [dragOver, setDragOver] = useState(false);
@@ -276,17 +285,17 @@ export const ImageUploadField = ({ value, onChange, label }: { value: string, on
     const handleUpload = async (file: File) => {
         setErrorMsg(null);
 
-        const MAX_SIZE = 10 * 1024 * 1024;
+        const MAX_SIZE = maxSizeMB * 1024 * 1024;
         if (file.size > MAX_SIZE) {
-            setErrorMsg('Dosya boyutu maksimum 10 MB olabilir.');
+            setErrorMsg(`Dosya boyutu maksimum ${maxSizeMB} MB olabilir.`);
             return;
         }
 
-        const allowedExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp'];
+        const allowedExtensions = allowedFormats.split(',').map(ext => ext.trim().toLowerCase());
         const extMatch = file.name.match(/\.[0-9a-z]+$/i);
         const extName = extMatch ? extMatch[0].toLowerCase() : '';
         if (!allowedExtensions.includes(extName)) {
-            setErrorMsg('Sadece .jpg, .jpeg, .png, .gif, .webp formatları yüklenebilir.');
+            setErrorMsg(`Sadece ${allowedFormats} formatları yüklenebilir.`);
             return;
         }
 

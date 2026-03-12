@@ -21,6 +21,11 @@ interface ServicesGridProps {
     showIndex?: boolean;
 }
 
+/**
+ * Hizmetler Izgarası (Grid) Bileşeni
+ * Sunulan hizmetleri kategorize edilmiş kartlar şeklinde listeler.
+ * Hover durumunda detaylı açıklama ve interaktif efektler sunar.
+ */
 const ServicesGrid: React.FC<ServicesGridProps> = ({ data, meta, showIndex }) => {
     return (
         <section id="hizmetler" className="scroll-mt-24 min-h-screen flex flex-col justify-center py-24 px-6 md:px-12 bg-[#FDFCFB]">

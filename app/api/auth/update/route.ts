@@ -1,104 +1,74 @@
 import { NextRequest, NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
+import bcrypt from 'bcryptjs';
+import { prisma } from '@/lib/prisma';
 
-const USERS_PATH = path.join(process.cwd(), 'app', 'data', 'users.json');
-const ACTIVE_SESSIONS_PATH = path.join(process.cwd(), 'app', 'data', 'active_sessions.json');
 const COOKIE_NAME = 'admin_session';
 
-function getActiveSessions(): Record<string, string> {
-    try {
-        if (!fs.existsSync(ACTIVE_SESSIONS_PATH)) return {};
-        const raw = fs.readFileSync(ACTIVE_SESSIONS_PATH, 'utf-8');
-        return JSON.parse(raw);
-    } catch {
-        return {};
-    }
-}
-
-function saveActiveSessions(sessions: Record<string, string>) {
-    try {
-        fs.writeFileSync(ACTIVE_SESSIONS_PATH, JSON.stringify(sessions, null, 2), 'utf-8');
-    } catch (e) {
-        console.error("Failed to save active sessions:", e);
-    }
-}
-
-function getUsers() {
-    try {
-        const raw = fs.readFileSync(USERS_PATH, 'utf-8');
-        return JSON.parse(raw);
-    } catch {
-        return [];
-    }
-}
-
-function saveUsers(data: any) {
-    fs.writeFileSync(USERS_PATH, JSON.stringify(data, null, 2), 'utf-8');
-}
-
 /**
- * PUT /api/auth/update — Update username and/or password for logged in user
+ * Giriş yapmış olan yöneticinin kendi bilgilerini (E-posta, Şifre) güncellemesini sağlayan PUT metodu.
+ * Güvenlik için mevcut şifrenin doğrulanması zorunludur.
  */
 export async function PUT(request: NextRequest) {
-    try {
-        const token = request.cookies.get(COOKIE_NAME)?.value;
-        if (!token) {
-            return NextResponse.json({ error: 'Yetkisiz erişim.' }, { status: 401 });
-        }
-
-        const sessions = getActiveSessions();
-        const currentUsername = sessions[token];
-
-        if (!currentUsername) {
-            return NextResponse.json({ error: 'Geçersiz veya süresi dolmuş oturum.' }, { status: 401 });
-        }
-
-        const body = await request.json();
-        const { currentPassword, newUsername, newPassword } = body;
-
-        if (!currentPassword) {
-            return NextResponse.json({ error: 'Mevcut şifrenizi girmelisiniz.' }, { status: 400 });
-        }
-
-        if (!newUsername && !newPassword) {
-            return NextResponse.json({ error: 'Güncellenecek yeni bir bilgi girilmedi.' }, { status: 400 });
-        }
-
-        const users = getUsers();
-        const userIndex = users.findIndex((u: any) => u.username === currentUsername);
-
-        if (userIndex === -1) {
-            return NextResponse.json({ error: 'Kullanıcı bulunamadı.' }, { status: 404 });
-        }
-
-        // Verify current password
-        if (currentPassword !== users[userIndex].password) {
-            return NextResponse.json({ error: 'Mevcut şifre hatalı.' }, { status: 401 });
-        }
-
-        // Update credentials
-        const updatedUsername = newUsername || users[userIndex].username;
-        users[userIndex] = {
-            ...users[userIndex],
-            username: updatedUsername,
-            password: newPassword || users[userIndex].password,
-        };
-
-        saveUsers(users);
-
-        // If username changed, update the active session map so they don't get logged out randomly
-        if (newUsername && newUsername !== currentUsername) {
-            sessions[token] = updatedUsername;
-            saveActiveSessions(sessions);
-        }
-
-        return NextResponse.json({ success: true, message: 'Hesap bilgileri başarıyla güncellendi.' });
-
-    } catch (error) {
-        return NextResponse.json(
-            { error: 'Güncelleme sırasında bir hata oluştu.' },
-            { status: 500 }
-        );
+  try {
+    const token = request.cookies.get(COOKIE_NAME)?.value;
+    if (!token) {
+      return NextResponse.json({ error: 'Yetkisiz erisim.' }, { status: 401 });
     }
+
+    const session = await prisma.session.findUnique({
+      where: { token },
+      include: { user: true },
+    });
+
+    if (!session || new Date(session.expiresAt) < new Date()) {
+      return NextResponse.json({ error: 'Gecersiz veya suresi dolmus oturum.' }, { status: 401 });
+    }
+
+    const body = await request.json();
+    const currentPassword = String(body.currentPassword || '');
+    const requestedUsername = String(body.newUsername || body.newEmail || '').trim().toLowerCase();
+    const newPassword = String(body.newPassword || '');
+
+    if (!currentPassword) {
+      return NextResponse.json({ error: 'Mevcut sifrenizi girmelisiniz.' }, { status: 400 });
+    }
+
+    if (!requestedUsername && !newPassword) {
+      return NextResponse.json({ error: 'Guncellenecek yeni bir bilgi girilmedi.' }, { status: 400 });
+    }
+
+    if (!bcrypt.compareSync(currentPassword, session.user.password)) {
+      return NextResponse.json({ error: 'Mevcut sifre hatali.' }, { status: 401 });
+    }
+
+    const updateData: { email?: string; password?: string; name?: string } = {};
+
+    if (requestedUsername) {
+      const existingUser = await prisma.user.findUnique({
+        where: { email: requestedUsername },
+        select: { id: true },
+      });
+
+      if (existingUser && existingUser.id !== session.user.id) {
+        return NextResponse.json({ error: 'Bu kullanici adi/e-posta zaten kullanimda.' }, { status: 400 });
+      }
+
+      updateData.email = requestedUsername;
+      updateData.name = requestedUsername;
+    }
+
+    if (newPassword) {
+      updateData.password = bcrypt.hashSync(newPassword, 10);
+    }
+
+    await prisma.user.update({
+      where: { id: session.user.id },
+      data: updateData,
+    });
+
+    return NextResponse.json({ success: true, message: 'Hesap bilgileri basariyla guncellendi.' });
+  } catch (error) {
+    console.error('Update error:', error);
+    return NextResponse.json({ error: 'Guncelleme sirasinda bir hata olustu.' }, { status: 500 });
+  }
 }
