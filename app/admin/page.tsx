@@ -128,8 +128,13 @@ export default function AdminPage() {
         if (isAuthenticated && activeSection) {
             const trHash = TR_HASH_MAP[activeSection] || activeSection;
             window.location.hash = trHash;
+        } else if (!isAuthChecking && !isAuthenticated) {
+            // Giriş ekranındayken URL'i login olarak işaretle
+            if (window.location.hash !== '#login') {
+                window.location.hash = 'login';
+            }
         }
-    }, [activeSection, isAuthenticated]);
+    }, [activeSection, isAuthenticated, isAuthChecking]);
 
     useEffect(() => {
         const handleHashChange = () => {
