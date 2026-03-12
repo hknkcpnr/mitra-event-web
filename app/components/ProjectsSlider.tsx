@@ -71,7 +71,7 @@ const ProjectsSlider: React.FC<ProjectsSliderProps> = ({ data, meta, showIndex }
                         {data?.map((project, index) => (
                             <div
                                 key={project?.id || index}
-                                className="relative flex-none w-[85%] sm:w-[50%] md:w-[40%] lg:w-[32%] aspect-square rounded-[2rem] overflow-hidden group snap-center md:snap-start"
+                                className="relative flex-shrink-0 w-[80%] sm:w-[45%] lg:w-[31%] aspect-[4/5] rounded-[2.5rem] overflow-hidden group snap-center md:snap-start shadow-sm hover:shadow-2xl transition-all duration-500"
                             >
                                 {showIndex && (
                                     <div className="absolute top-6 left-6 z-[30] w-10 h-10 bg-orange-600 text-white rounded-2xl flex items-center justify-center font-black shadow-2xl border-2 border-white/30 animate-in zoom-in duration-300">
