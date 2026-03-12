@@ -148,15 +148,22 @@ const InquiryForm: React.FC<InquiryFormProps> = ({ data }) => {
                         </div>
                         <div className="space-y-3">
                             <label className="text-[10px] font-bold tracking-widest uppercase text-[#A68BA6]">Etkinlik Türü</label>
-                            <select
-                                value={formData.eventType}
-                                onChange={(e) => setFormData({ ...formData, eventType: e.target.value })}
-                                className="w-full bg-transparent border-b border-[#2D2926]/10 py-3 outline-none focus:border-[#A68BA6] transition-all appearance-none cursor-pointer font-light"
-                            >
-                                {data.eventTypes?.map(type => (
-                                    <option key={type} value={type}>{type}</option>
-                                ))}
-                            </select>
+                            <div className="relative group">
+                                <select
+                                    value={formData.eventType}
+                                    onChange={(e) => setFormData({ ...formData, eventType: e.target.value })}
+                                    className="w-full bg-transparent border-b border-[#2D2926]/10 py-3 pr-10 outline-none focus:border-[#A68BA6] transition-all appearance-none cursor-pointer font-light"
+                                >
+                                    {data.eventTypes?.map(type => (
+                                        <option key={type} value={type} className="text-[#2D2926] bg-white">{type}</option>
+                                    ))}
+                                </select>
+                                <div className="absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none text-[#2D2926]/40 group-focus-within:text-[#A68BA6] transition-colors">
+                                    <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round">
+                                        <path d="m6 9 6 6 6-6"/>
+                                    </svg>
+                                </div>
+                            </div>
                         </div>
                         <div className="space-y-3">
                             <label className="text-[10px] font-bold tracking-widest uppercase text-[#A68BA6]">Mesajınız</label>
