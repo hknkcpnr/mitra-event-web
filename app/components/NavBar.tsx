@@ -66,7 +66,7 @@ const NavBar: React.FC<NavBarProps> = ({ whatsappUrl, brand }) => {
                         }
                     }}>
                         {brand?.logo ? (
-                            <div className="relative h-14 md:h-16 w-44 md:w-56 transition-all duration-300">
+                            <div className={`relative transition-all duration-500 ${scrolled ? 'h-16 md:h-20 w-48 md:w-64' : 'h-24 md:h-32 w-64 md:w-80'}`}>
                                 <Image
                                     src={scrolled ? brand.logo : (brand.logoLight || brand.logo)}
                                     alt={brand.siteName || "Logo"}
