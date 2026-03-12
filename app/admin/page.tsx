@@ -125,11 +125,11 @@ export default function AdminPage() {
 
     // URL hash ile aktif bölümü senkronize et
     useEffect(() => {
-        if (activeSection) {
+        if (isAuthenticated && activeSection) {
             const trHash = TR_HASH_MAP[activeSection] || activeSection;
             window.location.hash = trHash;
         }
-    }, [activeSection]);
+    }, [activeSection, isAuthenticated]);
 
     useEffect(() => {
         const handleHashChange = () => {
