@@ -84,7 +84,7 @@ const NavBar: React.FC<NavBarProps> = ({ whatsappUrl, brand }) => {
                     </a>
 
                     {/* Desktop Menu */}
-                    <div className="hidden md:flex items-center space-x-12">
+                    <div className={`hidden md:flex items-center space-x-12 transition-all duration-500 ${!scrolled ? 'md:-mt-4' : ''}`}>
                         {navLinks.map((link) => (
                             <a
                                 key={link.href}
