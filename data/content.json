@@ -1,0 +1,206 @@
+{
+  "brand": {
+    "logo": "/uploads/mitra_event_logo_transparent_1773080137543.png",
+    "logoLight": "/uploads/mitra_event_logo_transparent_1773080140559.png",
+    "siteName": "Mitra Event",
+    "favicon": "/favicon.ico"
+  },
+  "hero": {
+    "badgeTitle": "Mükemmel Uyumun Tasarım",
+    "titleLine1": "Parçaları",
+    "titleLine2": "Zarafetle",
+    "titleLine3": "Birleştiriyoruz.",
+    "description": "Mitra Event, hayallerinizin her bir detayını titizlikle işleyerek, bütünde kusursuz bir anı mozaiği oluşturur.",
+    "primaryButtonText": "PROJELERİ İNCELE",
+    "secondaryButtonText": "HİKAYEMİZ",
+    "images": [
+      {
+        "id": "hero_img_1",
+        "url": "/uploads/beautiful-archway-decorated-with-floral-composition-outdoors_1773000429142.jpg",
+        "alt": "Wedding Scene"
+      },
+      {
+        "id": "hero_img_2",
+        "url": "/uploads/img_16c6626b5d.jpg",
+        "alt": "Engagement Detail"
+      },
+      {
+        "id": "hero_img_3",
+        "url": "/uploads/img_e11222a3b6.jpg",
+        "alt": "Event Decor"
+      }
+    ],
+    "floatingBox": {
+      "tag": "Her Detay",
+      "tagLine2": "Bir Hikaye.",
+      "infoTitle": "Kurumsal Vizyon",
+      "infoSubtitle": "Modern Lüksün Tanımı"
+    }
+  },
+  "philosophy": {
+    "quoteLine1": "\"Zarafet, gereksiz her şeyin",
+    "quoteLine2": "elenmiş halidir.\"",
+    "description": "Bizim için lüks, abartıda değil; detayların birbiriyle olan sessiz uyumunda saklıdır. Her etkinliği bir küratör hassasiyetiyle yönetiyoruz.",
+    "bgImage": "/uploads/philosophy_bg.png"
+  },
+  "servicesMeta": {
+    "badge": "Hizmetlerimiz",
+    "titleLine1": "Hizmet",
+    "titleLine2": "Alanlarımız",
+    "description": "Sizin için sadece bir gece değil, ömür boyu hatırlanacak bir atmosfer inşa ediyoruz."
+  },
+  "services": [
+    {
+      "id": 1,
+      "title": "Wedding Atelier",
+      "category": "Kişiye Özel Düğün",
+      "desc": "Her detayı incelikle işlenmiş, zamansız bir zarafet sunan düğün tasarımları.",
+      "img": "/uploads/img_9f0026b3c2.jpg"
+    },
+    {
+      "id": 2,
+      "title": "Signature Engagement",
+      "category": "Butik Nişan",
+      "desc": "Minimalist estetiğin samimi duygularla buluştuğu imza kutlamalar.",
+      "img": "/uploads/img_f03ff29f91.jpg"
+    },
+    {
+      "id": 3,
+      "title": "Corporate Excellence",
+      "category": "Kurumsal Gala",
+      "desc": "Vizyonunuzu kusursuz bir organizasyonla somutlaştıran profesyonel yönetim.",
+      "img": "/uploads/img_4375a97b11.jpg"
+    }
+  ],
+  "testimonialsMeta": {
+    "badge": "Müşteri Deneyimi",
+    "titleLine1": "Gülümseyen",
+    "titleLine2": "Yüzler",
+    "description": "Her etkinliğin arkasında, güvenle bize teslim edilmiş bir hayal ve mutlu bir son yatar."
+  },
+  "testimonials": [
+    {
+      "id": 1,
+      "name": "Elif & Caner",
+      "role": "Düğün Töreni - 2025",
+      "quote": "Sanki zihnimizden geçenleri okumuşlar gibi, her detay mükemmeldi. Mitra Event ekibi gecemizi unutulmaz kıldı.",
+      "img": "/uploads/img_e537c0e4db.jpg"
+    },
+    {
+      "id": 2,
+      "name": "Asya Holding A.Ş.",
+      "role": "Kurumsal Yılbaşı Galası",
+      "quote": "Böylesine profesyonel ve çözüm odaklı bir ekiple çalışmak kurumumuz için büyük bir prestij kaynağı oldu. Ellerinize sağlık.",
+      "img": "/uploads/img_9e55adb9aa.jpg"
+    },
+    {
+      "id": 3,
+      "name": "Selin Atasoy",
+      "role": "Nişan Daveti",
+      "quote": "Stresli bir süreci rüya gibi bir nişana dönüştürdüler. Zarif detaylar tüm misafirlerimizi büyüledi.",
+      "img": "/uploads/img_c37b0c8590.jpg"
+    }
+  ],
+  "projectsMeta": {
+    "badge": "Portföyümüz",
+    "titleLine1": "Öne Çıkan",
+    "titleLine2": "Projeler"
+  },
+  "projects": [
+    {
+      "id": 1,
+      "title": "Bosphorus Gala",
+      "category": "Yaz Daveti",
+      "desc": "Boğazın eşsiz manzarası eşliğinde unutulmaz bir deneyim.",
+      "img": "/uploads/img_ca43a0be38.jpg"
+    },
+    {
+      "id": 2,
+      "title": "Autumn Romance",
+      "category": "Kır Düğünü",
+      "desc": "Doğanın içinde romantik ve sıcak bir atmosfer.",
+      "img": "/uploads/img_50f483ffbe.jpg"
+    },
+    {
+      "id": 3,
+      "title": "Midnight Soiree",
+      "category": "Özel Davet",
+      "desc": "Gece boyu süren, seçkin ve kusursuz bir eğlence.",
+      "img": "/uploads/img_831c5fb10c.jpg"
+    },
+    {
+      "id": 4,
+      "title": "Royal Symphony",
+      "category": "İmza Düğün",
+      "desc": "Saray konseptinde görkemli bir akşam, lüks detaylar.",
+      "img": "/uploads/img_2e4c31f78a.jpg"
+    },
+    {
+      "id": 5,
+      "title": "Urban Chic",
+      "category": "Kurumsal Gala",
+      "desc": "Şehrin kalbinde modern, yenilikçi ve şık lansman.",
+      "img": "/uploads/img_edec48750e.jpg"
+    }
+  ],
+  "gallery": [
+    {
+      "img": "/uploads/img_9f0026b3c2.jpg",
+      "alt": "Galeri Resim 3"
+    },
+    {
+      "img": "/uploads/img_f03ff29f91.jpg",
+      "alt": "Galeri Resim 4"
+    },
+    {
+      "img": "/uploads/img_831c5fb10c.jpg",
+      "alt": "Galeri Resim 4"
+    },
+    {
+      "img": "/uploads/img_50f483ffbe.jpg",
+      "alt": "Galeri Resim 4"
+    }
+  ],
+  "contact": {
+    "titleLine1": "İletişime",
+    "titleLine2": "Başlayalım",
+    "description": "Sizin için en uygun parçaları bir araya getirmek için buradayız. Formu doldurarak tasarım yolculuğumuzu başlatın.",
+    "email": "studio@mitraevent.com",
+    "phone": "+90 (212) 000 00 00",
+    "whatsappUrl": "https://wa.me/905538557612",
+    "whatsappText": "WhatsApp'tan Ulaşın",
+    "submitButtonText": "Siz yazın, biz sizlerle iletişime geçelim",
+    "showKvkk": true,
+    "kvkkText": "Kişisel verilerimin işlenmesine ilişkin KVKK aydınlatma metnini okudum ve onaylıyorum.",
+    "kvkkLink": "/kvkk",
+    "eventTypes": [
+      "Düğün",
+      "Nişan",
+      "İş Yemeği",
+      "Party"
+    ]
+  },
+  "footer": {
+    "description": "Zarafet her detayda saklıdır. En özel anlarınızı bir sanat eserine dönüştürmek için buradayız.",
+    "address": "Levent Loft, Büyükdere Cd. No:201 Beşiktaş / İstanbul",
+    "email": "studio@mitraevent.com",
+    "socials": {
+      "instagram": "https://instagram.com/mitraevent",
+      "linkedin": "https://linkedin.com/company/mitraevent",
+      "whatsapp": "https://wa.me/905538557612"
+    },
+    "bottomText": "MİTRA EVENT MANAGEMENT",
+    "bottomSubtitle": "LUXURY COLLECTIVE",
+    "mersisNo": "0000-0000-0000-0000",
+    "taxNumber": "0000000000",
+    "taxOffice": "Beşiktaş V.D."
+  },
+  "meta": {
+    "siteTitle": "Mitra Event | Profesyonel Etkinlik ve Düğün Organizasyonu",
+    "siteDescription": "Mitra Event, hayallerinizin her bir detayını titizlikle işleyerek, bütünde kusursuz bir anı mozaiği oluşturur. Düğün, nişan ve kurumsal etkinlik organizasyonu.",
+    "keywords": "düğün organizasyonu, nişan organizasyonu, etkinlik planlama, mitra event, kurumsal etkinlik, düğün planlama",
+    "ogImage": "/uploads/philosophy_bg.png",
+    "themeColor": "#2D2926",
+    "author": "Mitra Event"
+  }
+}

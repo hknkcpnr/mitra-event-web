@@ -1,0 +1,92 @@
+{
+    "daily": [
+        {
+            "date": "2026-03-02",
+            "visitors": 124,
+            "pageViews": 342,
+            "avgDuration": 185,
+            "bounceRate": 38
+        },
+        {
+            "date": "2026-03-03",
+            "visitors": 156,
+            "pageViews": 410,
+            "avgDuration": 210,
+            "bounceRate": 35
+        },
+        {
+            "date": "2026-03-04",
+            "visitors": 98,
+            "pageViews": 267,
+            "avgDuration": 162,
+            "bounceRate": 42
+        },
+        {
+            "date": "2026-03-05",
+            "visitors": 201,
+            "pageViews": 534,
+            "avgDuration": 238,
+            "bounceRate": 29
+        },
+        {
+            "date": "2026-03-06",
+            "visitors": 178,
+            "pageViews": 489,
+            "avgDuration": 221,
+            "bounceRate": 31
+        },
+        {
+            "date": "2026-03-07",
+            "visitors": 245,
+            "pageViews": 612,
+            "avgDuration": 254,
+            "bounceRate": 26
+        },
+        {
+            "date": "2026-03-08",
+            "visitors": 194,
+            "pageViews": 512,
+            "avgDuration": 198,
+            "bounceRate": 33
+        },
+        {
+            "date": "2026-03-09",
+            "visitors": 21,
+            "pageViews": 100,
+            "avgDuration": 0,
+            "bounceRate": 0
+        }
+    ],
+    "summary": {
+        "totalVisitors": 1217,
+        "totalPageViews": 3266,
+        "avgSessionDuration": 210,
+        "avgBounceRate": 33,
+        "topPages": [
+            {
+                "path": "/",
+                "views": 1301
+            },
+            {
+                "path": "/hizmetler",
+                "views": 876
+            },
+            {
+                "path": "/projeler",
+                "views": 654
+            },
+            {
+                "path": "/iletisim",
+                "views": 357
+            },
+            {
+                "path": "/admin",
+                "views": 75
+            },
+            {
+                "path": "/kvkk",
+                "views": 3
+            }
+        ]
+    }
+}
