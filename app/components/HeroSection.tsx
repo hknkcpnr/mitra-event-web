@@ -87,14 +87,20 @@ const HeroSection: React.FC<HeroSectionProps> = ({ data }) => {
 
                         {/* Piece 2: Top Right Small */}
                         <div className="col-span-5 row-span-4 overflow-hidden rounded-2xl lg:rounded-3xl shadow-xl mt-4 lg:mt-8 relative">
-                            <Image
-                                src={data?.images?.[1]?.url || '/placeholder.jpg'}
-                                alt={data?.images?.[1]?.alt || ''}
-                                fill
-                                sizes="(max-width: 768px) 100vw, 30vw"
-                                loading="lazy"
-                                className="w-full h-full object-cover animate-zoom-out origin-top-right"
-                            />
+                            {data?.images?.[1]?.url ? (
+                                <Image
+                                    src={data.images[1].url}
+                                    alt={data.images[1].alt || 'Image 2'}
+                                    fill
+                                    sizes="(max-width: 768px) 100vw, 30vw"
+                                    loading="lazy"
+                                    className="w-full h-full object-cover animate-zoom-out origin-top-right"
+                                />
+                            ) : (
+                                <div className="w-full h-full bg-stone-200 flex items-center justify-center text-stone-400">
+                                    No Image
+                                </div>
+                            )}
                         </div>
 
                         {/* Piece 3: Bottom Right Long */}

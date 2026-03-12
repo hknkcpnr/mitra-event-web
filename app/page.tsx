@@ -7,9 +7,7 @@ import PhilosophySection from './components/PhilosophySection';
 import ServicesGrid from './components/ServicesGrid';
 
 // Dynamic imports for off-screen components to improve initial TTI and LCP
-const ProjectsSlider = dynamic(() => import('./components/ProjectsSlider'), { 
-  loading: () => <div className="h-96 bg-gray-50 animate-pulse rounded-3xl m-6" /> 
-});
+import ProjectsSlider from './components/ProjectsSlider';
 const TestimonialsSlider = dynamic(() => import('./components/TestimonialsSlider'), { 
   loading: () => <div className="h-64 bg-gray-50 animate-pulse rounded-3xl m-6" /> 
 });
@@ -23,8 +21,8 @@ const Footer = dynamic(() => import('./components/Footer'), {
   loading: () => <div className="h-64 bg-gray-900/5 animate-pulse" /> 
 });
 
-// Use Next.js Revalidate for edge caching - increased to 1 hour for better performance
-export const revalidate = 3600; 
+// Use Next.js Revalidate for edge caching - set to 60 seconds for better preview of admin changes
+export const revalidate = 60; 
 
 /**
  * Ana Web Sayfası (Landing Page)
@@ -92,8 +90,8 @@ const App = async () => {
       <HeroSection data={siteData.hero} />
       <PhilosophySection data={siteData.philosophy} />
       <ServicesGrid data={siteData.services} meta={siteData.servicesMeta} />
-      <TestimonialsSlider data={siteData.testimonials} meta={siteData.testimonialsMeta} />
       <ProjectsSlider data={siteData.projects} meta={siteData.projectsMeta} />
+      <TestimonialsSlider data={siteData.testimonials} meta={siteData.testimonialsMeta} />
       <GallerySection images={siteData.gallery} />
       <InquiryForm data={siteData.contact} />
       <Footer data={siteData.footer} brand={siteData.brand} />

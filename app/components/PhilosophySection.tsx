@@ -20,7 +20,7 @@ interface PhilosophySectionProps {
  */
 const PhilosophySection: React.FC<PhilosophySectionProps> = ({ data }) => {
     return (
-        <section id="kürasyon" className="relative scroll-mt-24 min-h-[80vh] flex flex-col justify-center py-32 px-6 bg-white border-y border-stone-100 overflow-hidden">
+        <section id="vizyonumuz" className="relative scroll-mt-24 min-h-[80vh] flex flex-col justify-center py-32 px-6 bg-white border-y border-stone-100 overflow-hidden">
             {/* Background Image with Low Opacity */}
             {data.bgImage && (
                 <div className="absolute inset-0 z-0">

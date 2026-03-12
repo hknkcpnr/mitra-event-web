@@ -13,7 +13,7 @@ interface NavBarProps {
 }
 
 const navLinks = [
-    { label: 'Vizyonumuz', href: 'kürasyon' },
+    { label: 'Vizyonumuz', href: 'vizyonumuz' },
     { label: 'Hizmetler', href: 'hizmetler' },
     { label: 'Portföy', href: 'portföy' },
     { label: 'Galeri', href: 'galeri' },
