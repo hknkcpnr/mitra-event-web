@@ -28,11 +28,11 @@ const HeroSection: React.FC<HeroSectionProps> = ({ data }) => {
         <section className="relative min-h-screen flex items-center px-6 md:px-12 pt-28 pb-20 overflow-hidden">
             <div className="max-w-7xl mx-auto w-full grid lg:grid-cols-12 gap-16 items-center">
                 {/* Text Content */}
-                <div className="lg:col-span-5 z-10">
+                <div className="lg:col-span-6 z-10">
                     <div className="overflow-hidden mb-8">
                         <span className="inline-block text-[#A68BA6] text-xs tracking-[0.5em] uppercase font-bold animate-slideIn">{data?.badgeTitle}</span>
                     </div>
-                    <h1 className="text-5xl md:text-[5.5vw] font-serif leading-[1] mb-10 animate-fadeIn">
+                    <h1 className="text-5xl md:text-[5vw] font-serif leading-[1] mb-10 animate-fadeIn">
                         {data?.titleLine1} <br />
                         <span className="italic font-light">{data?.titleLine2}</span> <br />
                         {data?.titleLine3}
@@ -52,7 +52,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({ data }) => {
                 </div>
 
                 {/* Puzzle Image Grid */}
-                <div className="lg:col-span-7 relative">
+                <div className="lg:col-span-6 relative">
                     <div className="grid grid-cols-12 grid-rows-12 gap-4 h-[600px] md:h-[750px] animate-puzzleReveal">
                         {/* Piece 1: Large Center-Left */}
                         <div className="col-span-7 row-span-8 overflow-hidden rounded-3xl shadow-2xl relative group">
