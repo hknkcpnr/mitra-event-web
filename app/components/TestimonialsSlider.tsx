@@ -52,14 +52,14 @@ const TestimonialsSlider: React.FC<TestimonialsSliderProps> = ({ data, meta, sho
                     {/* Left Column - Meta */}
                     <div className="max-w-lg">
                         <span className="block text-xs font-bold tracking-[0.2em] text-[#2D2926]/60 mb-4 uppercase">
-                            {meta.badge}
+                            {meta?.badge}
                         </span>
                         <h2 className="text-4xl md:text-5xl font-bold text-[#2D2926] leading-[1.1] mb-6">
-                            {meta.titleLine1} <br />
-                            <span className="font-light italic text-[#2D2926]/70">{meta.titleLine2}</span>
+                            {meta?.titleLine1} <br />
+                            <span className="font-light italic text-[#2D2926]/70">{meta?.titleLine2}</span>
                         </h2>
                         <p className="text-gray-600 text-lg leading-relaxed mb-8">
-                            {meta.description}
+                            {meta?.description}
                         </p>
                     </div>
 
@@ -69,9 +69,9 @@ const TestimonialsSlider: React.FC<TestimonialsSliderProps> = ({ data, meta, sho
                         <Quote size={120} className="absolute -top-10 -left-10 text-[#2D2926]/5 -rotate-12 z-0" />
 
                         <div className="relative z-10 w-full h-[320px] md:h-[280px]">
-                            {data.map((testimonial, idx) => (
+                            {data?.map((testimonial, idx) => (
                                 <div
-                                    key={testimonial.id}
+                                    key={testimonial?.id || idx}
                                     className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${idx === activeIndex ? 'opacity-100 z-10 pointer-events-auto' : 'opacity-0 z-0 pointer-events-none'
                                         }`}
                                 >
@@ -87,27 +87,27 @@ const TestimonialsSlider: React.FC<TestimonialsSliderProps> = ({ data, meta, sho
 
                                                 <div className="flex items-center justify-end gap-4 text-right">
                                                     <div className="hidden sm:block">
-                                                        <h4 className="text-[#2D2926] font-bold text-lg">{testimonial.name}</h4>
-                                                        <p className="text-[#2D2926]/50 text-xs md:text-sm font-medium tracking-wide uppercase">{testimonial.role}</p>
+                                                        <h4 className="text-[#2D2926] font-bold text-lg">{testimonial?.name}</h4>
+                                                        <p className="text-[#2D2926]/50 text-xs md:text-sm font-medium tracking-wide uppercase">{testimonial?.role}</p>
                                                     </div>
-                                                    {testimonial.img && (
+                                                    {testimonial?.img && (
                                                         <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-[#E6DDE6] shrink-0">
                                                             <img
-                                                                src={testimonial.img}
-                                                                alt={testimonial.name}
+                                                                src={testimonial?.img}
+                                                                alt={testimonial?.name}
                                                                 className="w-full h-full object-cover"
                                                             />
                                                         </div>
                                                     )}
                                                     <div className="block sm:hidden text-left ml-2">
-                                                        <h4 className="text-[#2D2926] font-bold text-sm">{testimonial.name}</h4>
-                                                        <p className="text-[#2D2926]/50 text-[10px] font-medium tracking-wide uppercase">{testimonial.role}</p>
+                                                        <h4 className="text-[#2D2926] font-bold text-sm">{testimonial?.name}</h4>
+                                                        <p className="text-[#2D2926]/50 text-[10px] font-medium tracking-wide uppercase">{testimonial?.role}</p>
                                                     </div>
                                                 </div>
                                             </div>
 
                                             <p className="text-[#2D2926]/80 text-xl md:text-2xl leading-relaxed italic font-light">
-                                                "{testimonial.quote}"
+                                                "{testimonial?.quote}"
                                             </p>
                                         </div>
                                     </div>

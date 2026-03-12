@@ -30,22 +30,22 @@ const HeroSection: React.FC<HeroSectionProps> = ({ data }) => {
                 {/* Text Content */}
                 <div className="lg:col-span-5 z-10">
                     <div className="overflow-hidden mb-8">
-                        <span className="inline-block text-[#A68BA6] text-xs tracking-[0.5em] uppercase font-bold animate-slideIn">{data.badgeTitle}</span>
+                        <span className="inline-block text-[#A68BA6] text-xs tracking-[0.5em] uppercase font-bold animate-slideIn">{data?.badgeTitle}</span>
                     </div>
                     <h1 className="text-5xl md:text-[5.5vw] font-serif leading-[1] mb-10 animate-fadeIn">
-                        {data.titleLine1} <br />
-                        <span className="italic font-light">{data.titleLine2}</span> <br />
-                        {data.titleLine3}
+                        {data?.titleLine1} <br />
+                        <span className="italic font-light">{data?.titleLine2}</span> <br />
+                        {data?.titleLine3}
                     </h1>
                     <p className="text-[#6B6661] text-lg font-light leading-relaxed mb-12 max-w-md animate-fadeIn opacity-80">
-                        {data.description}
+                        {data?.description}
                     </p>
                     <div className="flex flex-col sm:flex-row gap-6 animate-fadeIn">
                         <button className="bg-[#2D2926] text-white px-10 py-4 rounded-full text-[11px] font-bold tracking-[0.3em] uppercase hover:bg-[#4A4541] transition-all shadow-xl shadow-stone-200">
-                            {data.primaryButtonText}
+                            {data?.primaryButtonText}
                         </button>
                         <button className="group flex items-center space-x-4 text-[#2D2926] py-4">
-                            <span className="text-xs font-bold tracking-widest uppercase border-b-2 border-[#2D2926]/10 pb-1 group-hover:border-[#A68BA6] transition-all">{data.secondaryButtonText}</span>
+                            <span className="text-xs font-bold tracking-widest uppercase border-b-2 border-[#2D2926]/10 pb-1 group-hover:border-[#A68BA6] transition-all">{data?.secondaryButtonText}</span>
                             <ArrowRight size={18} className="group-hover:translate-x-2 transition-transform" />
                         </button>
                     </div>
@@ -57,8 +57,8 @@ const HeroSection: React.FC<HeroSectionProps> = ({ data }) => {
                         {/* Piece 1: Large Center-Left */}
                         <div className="col-span-7 row-span-8 overflow-hidden rounded-3xl shadow-2xl relative group">
                             <Image
-                                src={data.images[0]?.url || '/placeholder.jpg'}
-                                alt={data.images[0]?.alt || ''}
+                                src={data?.images?.[0]?.url || '/placeholder.jpg'}
+                                alt={data?.images?.[0]?.alt || ''}
                                 fill
                                 sizes="(max-width: 768px) 100vw, 50vw"
                                 priority
@@ -70,8 +70,8 @@ const HeroSection: React.FC<HeroSectionProps> = ({ data }) => {
                         {/* Piece 2: Top Right Small */}
                         <div className="col-span-5 row-span-4 overflow-hidden rounded-3xl shadow-xl mt-8 relative">
                             <Image
-                                src={data.images[1]?.url || '/placeholder.jpg'}
-                                alt={data.images[1]?.alt || ''}
+                                src={data?.images?.[1]?.url || '/placeholder.jpg'}
+                                alt={data?.images?.[1]?.alt || ''}
                                 fill
                                 sizes="(max-width: 768px) 100vw, 30vw"
                                 loading="lazy"
@@ -82,8 +82,8 @@ const HeroSection: React.FC<HeroSectionProps> = ({ data }) => {
                         {/* Piece 3: Bottom Right Long */}
                         <div className="col-span-5 row-span-7 overflow-hidden rounded-3xl shadow-xl -mt-4 relative">
                             <Image
-                                src={data.images[2]?.url || '/placeholder.jpg'}
-                                alt={data.images[2]?.alt || ''}
+                                src={data?.images?.[2]?.url || '/placeholder.jpg'}
+                                alt={data?.images?.[2]?.alt || ''}
                                 fill
                                 sizes="(max-width: 768px) 100vw, 30vw"
                                 loading="lazy"
@@ -95,7 +95,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({ data }) => {
                         <div className="col-start-2 col-span-5 row-span-3 overflow-hidden rounded-3xl shadow-lg relative -mt-4">
                             <div className="absolute inset-0 bg-[#E6DDE6] flex items-center justify-center p-6 text-center">
                                 <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-[#A68BA6] leading-relaxed">
-                                    {data.floatingBox.tag} <br /> {data.floatingBox.tagLine2}
+                                    {data?.floatingBox?.tag} <br /> {data?.floatingBox?.tagLine2}
                                 </p>
                             </div>
                         </div>
@@ -109,8 +109,8 @@ const HeroSection: React.FC<HeroSectionProps> = ({ data }) => {
                         <div className="flex items-center space-x-4">
                             <div className="w-1 h-10 bg-[#A68BA6] rounded-full"></div>
                             <div>
-                                <p className="text-[9px] font-bold tracking-widest uppercase text-[#A68BA6] mb-1">{data.floatingBox.infoTitle}</p>
-                                <h3 className="text-sm font-serif italic">{data.floatingBox.infoSubtitle}</h3>
+                                <p className="text-[9px] font-bold tracking-widest uppercase text-[#A68BA6] mb-1">{data?.floatingBox?.infoTitle}</p>
+                                <h3 className="text-sm font-serif italic">{data?.floatingBox?.infoSubtitle}</h3>
                             </div>
                         </div>
                     </div>

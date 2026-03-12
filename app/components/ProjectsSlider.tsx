@@ -48,8 +48,8 @@ const ProjectsSlider: React.FC<ProjectsSliderProps> = ({ data, meta, showIndex }
             <div className="max-w-7xl mx-auto">
                 <div className="flex justify-between items-end mb-16">
                     <div>
-                        <span className="text-[#A68BA6] text-xs tracking-[0.4em] uppercase font-bold mb-4 block">{meta.badge}</span>
-                        <h2 className="text-4xl md:text-5xl font-serif">{meta.titleLine1} <span className="italic font-light">{meta.titleLine2}</span></h2>
+                        <span className="text-[#A68BA6] text-xs tracking-[0.4em] uppercase font-bold mb-4 block">{meta?.badge}</span>
+                        <h2 className="text-4xl md:text-5xl font-serif">{meta?.titleLine1} <span className="italic font-light">{meta?.titleLine2}</span></h2>
                     </div>
                     <div className="flex space-x-4">
                         <button onClick={scrollLeft} className="w-12 h-12 rounded-full border border-[#2D2926]/20 flex items-center justify-center hover:bg-[#2D2926] hover:text-white transition-all">
@@ -67,9 +67,9 @@ const ProjectsSlider: React.FC<ProjectsSliderProps> = ({ data, meta, showIndex }
                         className="flex gap-6 overflow-x-auto snap-x snap-mandatory pb-8 hide-scrollbar"
                         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
                     >
-                        {data.map((project, index) => (
+                        {data?.map((project, index) => (
                             <div
-                                key={project.id}
+                                key={project?.id || index}
                                 className="relative flex-none w-[85%] sm:w-[50%] md:w-[40%] lg:w-[32%] aspect-square rounded-[2rem] overflow-hidden group snap-center md:snap-start"
                             >
                                 {showIndex && (
@@ -77,12 +77,12 @@ const ProjectsSlider: React.FC<ProjectsSliderProps> = ({ data, meta, showIndex }
                                         {index + 1}
                                     </div>
                                 )}
-                                <img src={project.img} alt={project.title} className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" />
+                                <img src={project?.img} alt={project?.title} className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" />
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-8 text-white opacity-90 group-hover:opacity-100 transition-opacity duration-500">
-                                    <span className="text-[#E6DDE6] text-[10px] tracking-widest uppercase font-bold mb-3 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500">{project.category}</span>
+                                    <span className="text-[#E6DDE6] text-[10px] tracking-widest uppercase font-bold mb-3 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500">{project?.category}</span>
                                     <div>
-                                        <h3 className="text-2xl md:text-3xl font-serif mb-2 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500 delay-75">{project.title}</h3>
-                                        <p className="font-light text-sm text-white/80 line-clamp-2 transform translate-y-4 group-hover:translate-y-0 opacity-0 group-hover:opacity-100 transition-all duration-500 delay-150">{project.desc}</p>
+                                        <h3 className="text-2xl md:text-3xl font-serif mb-2 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500 delay-75">{project?.title}</h3>
+                                        <p className="font-light text-sm text-white/80 line-clamp-2 transform translate-y-4 group-hover:translate-y-0 opacity-0 group-hover:opacity-100 transition-all duration-500 delay-150">{project?.desc}</p>
                                     </div>
                                 </div>
                                 <button className="absolute top-6 right-6 w-12 h-12 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center opacity-0 group-hover:opacity-100 hover:bg-white hover:text-black transition-all duration-500 transform translate-x-4 group-hover:translate-x-0">
