@@ -2922,23 +2922,23 @@ export default function AdminPage() {
                 </div>
 
                 {/* Sidebar Footer / User Info */}
-                <div className="p-4 border-t border-[#2D2926]/5">
-                    <div className="flex items-center justify-between">
+                <div className="p-4 border-t border-[#2D2926]/5 bg-gray-50/50">
+                    <div className="flex flex-col gap-4">
                         <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-full bg-[#FFF7ED] flex items-center justify-center text-[#2D2926] font-bold text-xs uppercase">
+                            <div className="w-9 h-9 rounded-xl bg-white border border-gray-200 shadow-sm flex items-center justify-center text-[#2D2926] font-bold text-sm uppercase">
                                 {loginUsername?.charAt(0) || 'M'}
                             </div>
-                            <div className="text-sm">
-                                <p className="font-semibold text-[#2D2926] text-[13px] break-all max-w-[100px] truncate">{loginUsername || 'Yönetici'}</p>
-                                <p className="text-[11px] text-gray-400 font-bold uppercase tracking-wider">{userRole === 'admin' ? 'Yönetici' : 'Editör'}</p>
+                            <div className="text-sm overflow-hidden">
+                                <p className="font-bold text-[#2D2926] text-[13px] truncate">{loginUsername || 'Yönetici'}</p>
+                                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{userRole === 'admin' ? 'Yönetici' : 'Editör'}</p>
                             </div>
                         </div>
                         <button
                             onClick={handleLogout}
-                            title="Çıkış Yap"
-                            className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                            className="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-white bg-red-500 hover:bg-red-600 active:scale-[0.98] transition-all font-bold text-[11px] uppercase tracking-[0.1em] shadow-lg shadow-red-500/20"
                         >
-                            <LogOut size={16} />
+                            <LogOut size={14} />
+                            <span>Sistemden Çıkış Yap</span>
                         </button>
                     </div>
                 </div>
