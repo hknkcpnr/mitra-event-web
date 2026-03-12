@@ -57,6 +57,14 @@ const HeroSection: React.FC<HeroSectionProps> = ({ data }) => {
                             </div>
                         </button>
                     </div>
+                    
+                    {/* Elegant Tagline under buttons */}
+                    <div className="mt-10 opacity-40 animate-fadeIn" style={{ animationDelay: '0.8s' }}>
+                        <p className="text-[10px] tracking-[0.3em] uppercase flex items-center justify-center lg:justify-start gap-4">
+                            <span className="w-8 h-[1px] bg-[#2D2926]"></span>
+                            Hayalinizdeki anlar, sanatla buluşuyor
+                        </p>
+                    </div>
                 </div>
 
                 {/* Puzzle Image Grid */}
