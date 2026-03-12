@@ -1,0 +1,124 @@
+﻿
+> mitraevent@0.1.0 build
+> next build
+
+Ôû▓ Next.js 16.1.6 (Turbopack)
+- Environments: .env
+
+node.exe : ÔÜá The "middleware" file conventio
+n is deprecated. Please use "proxy" instead. L
+earn more: https://nextjs.org/docs/messages/mi
+ddleware-to-proxy
+At C:\Program Files\nodejs\npm.ps1:29 char:3
++   & $NODE_EXE $NPM_CLI_JS $args
++   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ( 
+   ÔÜá The "middle...leware-to-proxy:String)  
+   [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandEr 
+   ror
+ 
+  Creating an optimized production build ...
+
+> Build error occurred
+Error: Turbopack build failed with 2 errors:
+./app/components/TestimonialsSlider.tsx:1:27
+Ecmascript file had an error
+[0m[31m[1m>[22m[39m[90m 1 |[39m [36mim
+port[39m [33mReact[39m[33m,[39m { useStat
+e[33m,[39m useEffect } [36mfrom[39m [32m'
+react'[39m[33m;[39m
+ [90m   |[39m                           [31
+m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^
+[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[
+31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 2 |[39m [36mimport[39m { [33mQuote
+[39m } [36mfrom[39m [32m'lucide-react'[39m
+[33m;[39m
+ [90m 3 |[39m
+ [90m 4 |[39m [36minterface[39m [33mTesti
+monial[39m {[0m
+
+You're importing a component that needs `useEf
+fect`. This React Hook only works in a Client 
+Component. To fix, mark the file (or its paren
+t) with the `"use client"` directive.
+
+ Learn more: https://nextjs.org/docs/app/api-r
+eference/directives/use-client
+
+
+
+Import traces:
+  Server Component:
+    ./app/components/TestimonialsSlider.tsx
+    ./app/page.tsx
+
+  Client Component Browser:
+    ./app/components/TestimonialsSlider.tsx [C
+lient Component Browser]
+    ./app/admin/page.tsx [Client Component Bro
+wser]
+    ./app/admin/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/components/TestimonialsSlider.tsx [C
+lient Component SSR]
+    ./app/admin/page.tsx [Client Component SSR
+]
+    ./app/admin/page.tsx [Server Component]
+
+
+./app/components/TestimonialsSlider.tsx:1:17
+Ecmascript file had an error
+[0m[31m[1m>[22m[39m[90m 1 |[39m [36mim
+port[39m [33mReact[39m[33m,[39m { useStat
+e[33m,[39m useEffect } [36mfrom[39m [32m'
+react'[39m[33m;[39m
+ [90m   |[39m                 [31m[1m^[22
+m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m
+[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[
+22m[39m
+ [90m 2 |[39m [36mimport[39m { [33mQuote
+[39m } [36mfrom[39m [32m'lucide-react'[39m
+[33m;[39m
+ [90m 3 |[39m
+ [90m 4 |[39m [36minterface[39m [33mTesti
+monial[39m {[0m
+
+You're importing a component that needs `useSt
+ate`. This React Hook only works in a Client C
+omponent. To fix, mark the file (or its parent
+) with the `"use client"` directive.
+
+ Learn more: https://nextjs.org/docs/app/api-r
+eference/directives/use-client
+
+
+
+Import traces:
+  Server Component:
+    ./app/components/TestimonialsSlider.tsx
+    ./app/page.tsx
+
+  Client Component Browser:
+    ./app/components/TestimonialsSlider.tsx [C
+lient Component Browser]
+    ./app/admin/page.tsx [Client Component Bro
+wser]
+    ./app/admin/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/components/TestimonialsSlider.tsx [C
+lient Component SSR]
+    ./app/admin/page.tsx [Client Component SSR
+]
+    ./app/admin/page.tsx [Server Component]
+
+
+    at <unknown> (./app/components/Testimonial
+sSlider.tsx:1:27)
+    at <unknown> (./app/components/Testimonial
+sSlider.tsx:1:17)
