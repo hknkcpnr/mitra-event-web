@@ -117,3 +117,34 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Failed to update stats' }, { status: 500 });
   }
 }
+
+/**
+ * Günlük istatistikleri sıfırlayan DELETE metodu.
+ */
+export async function DELETE(request: NextRequest) {
+  const session = await getSessionWithUser(request);
+  if (!session) {
+    return NextResponse.json({ error: 'Yetkisiz erişim.' }, { status: 401 });
+  }
+
+  try {
+    const today = new Date().toISOString().split('T')[0];
+    const stats = await readStatsFromDb();
+
+    if (stats.daily) {
+      const todayRecord = stats.daily.find((d) => d.date === today);
+      if (todayRecord) {
+        // Günlük verileri sıfırla
+        todayRecord.visitors = 0;
+        todayRecord.pageViews = 0;
+        
+        await writeStatsToDb(stats);
+      }
+    }
+
+    return NextResponse.json({ success: true, message: 'Günlük istatistikler sıfırlandı.' });
+  } catch (error) {
+    console.error('Error resetting stats:', error);
+    return NextResponse.json({ error: 'İstatistikler sıfırlanırken bir hata oluştu.' }, { status: 500 });
+  }
+}

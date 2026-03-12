@@ -385,9 +385,6 @@ export default function AdminPage() {
         }
     };
 
-    /**
-     * Mevcut bir sistem kullanıcısının bilgilerini günceller
-     */
     const handleUpdateUser = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!editingUser) return;
@@ -413,6 +410,38 @@ export default function AdminPage() {
             }
         } catch {
             setSystemMessage({ type: 'error', text: 'Bağlantı hatası' });
+        }
+    };
+    
+    /**
+     * Günlük ziyaretçi istatistiklerini sıfırlar
+     */
+    const handleResetStats = async () => {
+        if (!confirm('Bugünkü ziyaretçi ve sayfa görüntüleme sayılarını sıfırlamak istediğinize emin misiniz?')) return;
+        
+        try {
+            const res = await fetch('/api/stats', { method: 'DELETE' });
+            const data = await res.json();
+            
+            if (res.ok) {
+                // Yerel stats durumunu güncelle (bugünü sıfırla)
+                if (stats && stats.daily) {
+                    const today = new Date().toISOString().split('T')[0];
+                    const newStats = JSON.parse(JSON.stringify(stats));
+                    const todayRecord = newStats.daily.find((d: any) => d.date === today);
+                    if (todayRecord) {
+                        todayRecord.visitors = 0;
+                        todayRecord.pageViews = 0;
+                        setStats(newStats);
+                    }
+                }
+                setMessage({ type: 'success', text: 'Günlük istatistikler sıfırlandı.' });
+                setTimeout(() => setMessage(null), 3000);
+            } else {
+                setMessage({ type: 'error', text: data.error || 'Sıfırlama hatası.' });
+            }
+        } catch {
+            setMessage({ type: 'error', text: 'Bağlantı hatası.' });
         }
     };
 
@@ -2370,6 +2399,34 @@ export default function AdminPage() {
                             )}
                         </div>
                     ))}
+                </div>
+
+                {/* Statistics Management */}
+                <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-8 space-y-6">
+                    <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center text-orange-500">
+                            <BarChart3 size={20} />
+                        </div>
+                        <div>
+                            <h3 className="text-sm font-bold text-gray-700">İstatistik Yönetimi</h3>
+                            <p className="text-[11px] text-gray-400">Site trafik verilerini buradan yönetin.</p>
+                        </div>
+                    </div>
+                    
+                    <div className="p-6 bg-orange-50/50 rounded-2xl border border-orange-100 flex flex-col md:flex-row items-center justify-between gap-6">
+                        <div className="flex-1">
+                            <p className="text-xs font-bold text-[#2D2926] mb-1">Günlük Ziyaretçileri Sıfırla</p>
+                            <p className="text-[10px] text-gray-500 leading-relaxed">
+                                Bugünkü ziyaretçi ve sayfa görüntüleme sayılarını sıfırlar. Bu işlem geri alınamaz.
+                            </p>
+                        </div>
+                        <button
+                            onClick={handleResetStats}
+                            className="px-6 py-3 bg-white border border-orange-200 text-orange-600 rounded-xl text-[10px] font-bold tracking-widest uppercase hover:bg-orange-600 hover:text-white transition-all shadow-sm active:scale-95"
+                        >
+                            Verileri Temizle
+                        </button>
+                    </div>
                 </div>
             </div>
         );
