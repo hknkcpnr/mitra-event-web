@@ -40,13 +40,21 @@ const HeroSection: React.FC<HeroSectionProps> = ({ data }) => {
                     <p className="text-[#6B6661] text-base lg:text-lg font-light leading-relaxed mb-10 lg:mb-12 max-w-md mx-auto lg:mx-0 animate-fadeIn opacity-80">
                         {data?.description}
                     </p>
-                    <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 lg:gap-6 animate-fadeIn">
-                        <button className="w-full sm:w-auto bg-[#2D2926] text-white px-10 py-4 rounded-full text-[10px] lg:text-[11px] font-bold tracking-[0.3em] uppercase hover:bg-[#4A4541] transition-all shadow-xl shadow-stone-200">
-                            {data?.primaryButtonText}
+                    <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 lg:gap-8 animate-fadeIn">
+                        {/* Primary CTA: Luxury Aesthetic */}
+                        <button className="relative group w-full sm:w-auto overflow-hidden bg-[#2D2926] text-white px-12 py-5 rounded-full text-[10px] lg:text-[11px] font-bold tracking-[0.4em] uppercase transition-all duration-500 hover:shadow-2xl hover:shadow-[#A68BA6]/30 hover:-translate-y-1 active:scale-95">
+                            <span className="relative z-10">{data?.primaryButtonText}</span>
+                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:animate-shimmer"></div>
                         </button>
-                        <button className="group flex items-center space-x-4 text-[#2D2926] py-2 lg:py-4">
-                            <span className="text-[10px] lg:text-xs font-bold tracking-widest uppercase border-b-2 border-[#2D2926]/10 pb-1 group-hover:border-[#A68BA6] transition-all">{data?.secondaryButtonText}</span>
-                            <ArrowRight size={16} className="group-hover:translate-x-2 transition-transform" />
+                        
+                        {/* Secondary CTA: Elegant Minimalist */}
+                        <button className="group relative flex items-center space-x-6 text-[#2D2926] py-2 lg:py-4 transition-all duration-300 hover:text-[#A68BA6]">
+                            <span className="relative text-[10px] lg:text-[11px] font-bold tracking-[0.3em] uppercase after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-full after:h-0.5 after:bg-[#A68BA6] after:origin-left after:scale-x-0 group-hover:after:scale-x-100 after:transition-transform after:duration-500">
+                                {data?.secondaryButtonText}
+                            </span>
+                            <div className="w-10 h-10 rounded-full border border-[#2D2926]/10 flex items-center justify-center group-hover:border-[#A68BA6] group-hover:bg-[#A68BA6] group-hover:text-white transition-all duration-500 group-hover:rotate-45">
+                                <ArrowRight size={16} />
+                            </div>
                         </button>
                     </div>
                 </div>

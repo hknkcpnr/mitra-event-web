@@ -80,3 +80,13 @@ html {
 .animate-puzzleReveal {
   animation: puzzleReveal 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
+
+@keyframes shimmer {
+  0% { transform: translateX(-150%); }
+  50% { transform: translateX(150%); }
+  100% { transform: translateX(150%); }
+}
+
+.animate-shimmer {
+  animation: shimmer 3s infinite;
+}
