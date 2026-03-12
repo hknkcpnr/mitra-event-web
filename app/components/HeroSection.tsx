@@ -41,23 +41,23 @@ const HeroSection: React.FC<HeroSectionProps> = ({ data }) => {
                     </p>
                     <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 lg:gap-8 animate-fadeIn">
                         {/* Primary CTA: Luxury Aesthetic */}
-                        <button className="relative group w-full sm:w-auto overflow-hidden bg-[#2D2926] text-white px-12 py-5 rounded-full text-[10px] lg:text-[11px] font-bold tracking-[0.4em] uppercase transition-all duration-500 hover:shadow-2xl hover:shadow-[#A68BA6]/30 hover:-translate-y-1 active:scale-95">
+                        <a href="#galeri" className="relative group w-full sm:w-auto overflow-hidden bg-[#2D2926] text-white px-12 py-5 rounded-full text-[10px] lg:text-[11px] font-bold tracking-[0.4em] uppercase transition-all duration-500 hover:shadow-2xl hover:shadow-[#A68BA6]/30 hover:-translate-y-1 active:scale-95 text-center">
                             <div className="relative z-10 flex items-center justify-center space-x-4">
                                 <Sparkles size={16} className="text-[#A68BA6] transition-all duration-500 group-hover:rotate-12 group-hover:scale-125" />
                                 <span className="pt-0.5">{data?.primaryButtonText}</span>
                             </div>
                             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:animate-shimmer"></div>
-                        </button>
+                        </a>
                         
                         {/* Secondary CTA: Elegant Minimalist */}
-                        <button className="group relative flex items-center space-x-6 text-[#2D2926] py-2 lg:py-4 transition-all duration-300 hover:text-[#A68BA6]">
+                        <a href="#vizyonumuz" className="group relative flex items-center space-x-6 text-[#2D2926] py-2 lg:py-4 transition-all duration-300 hover:text-[#A68BA6]">
                             <span className="relative text-[10px] lg:text-[11px] font-bold tracking-[0.3em] uppercase after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-full after:h-0.5 after:bg-[#A68BA6] after:origin-left after:scale-x-0 group-hover:after:scale-x-100 after:transition-transform after:duration-500">
                                 {data?.secondaryButtonText}
                             </span>
                             <div className="w-10 h-10 rounded-full border border-[#2D2926]/10 flex items-center justify-center group-hover:border-[#A68BA6] group-hover:bg-[#A68BA6] group-hover:text-white transition-all duration-500 group-hover:rotate-45">
                                 <ArrowRight size={16} />
                             </div>
-                        </button>
+                        </a>
                     </div>
                     
                     {/* Elegant Tagline under buttons */}
