@@ -16,6 +16,8 @@ interface GallerySectionProps {
  * resim ızgarasını (grid) oluşturur.
  */
 const GallerySection: React.FC<GallerySectionProps> = ({ images }) => {
+    const [selectedImage, setSelectedImage] = React.useState<GalleryItem | null>(null);
+
     if (!images || images.length === 0) return null;
 
     return (
@@ -36,7 +38,8 @@ const GallerySection: React.FC<GallerySectionProps> = ({ images }) => {
                     {images.map((item, index) => (
                         <div
                             key={index}
-                            className={`group relative overflow-hidden rounded-3xl aspect-[4/5] bg-stone-100 ${index % 4 === 1 || index % 4 === 2 ? 'md:translate-y-12' : ''
+                            onClick={() => setSelectedImage(item)}
+                            className={`group relative overflow-hidden rounded-3xl aspect-[4/5] bg-stone-100 cursor-pointer ${index % 4 === 1 || index % 4 === 2 ? 'md:translate-y-12' : ''
                                 }`}
                         >
                             <img
@@ -53,6 +56,31 @@ const GallerySection: React.FC<GallerySectionProps> = ({ images }) => {
                     ))}
                 </div>
             </div>
+
+            {/* Lightbox / Modal */}
+            {selectedImage && (
+                <div 
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md p-4 animate-fadeIn"
+                    onClick={() => setSelectedImage(null)}
+                >
+                    <div className="relative max-w-5xl w-full h-[80vh] animate-zoomIn">
+                        <img 
+                            src={selectedImage.img} 
+                            alt={selectedImage.alt} 
+                            className="w-full h-full object-contain"
+                        />
+                        <button 
+                            className="absolute top-4 right-4 text-white hover:text-[#A68BA6] transition-colors"
+                            onClick={() => setSelectedImage(null)}
+                        >
+                            <svg viewBox="0 0 24 24" width="32" height="32" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round">
+                                <line x1="18" y1="6" x2="6" y2="18"></line>
+                                <line x1="6" y1="6" x2="18" y2="18"></line>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            )}
         </section>
     );
 };
