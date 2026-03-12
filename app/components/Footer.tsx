@@ -83,7 +83,7 @@ const Footer: React.FC<FooterProps> = ({ data, brand }) => {
                     {/* Brand Column */}
                     <div className="space-y-8">
                         {brand?.logo ? (
-                            <div className="relative h-12 w-40">
+                            <div className="relative h-16 w-56">
                                 <Image
                                     src={brand?.logo}
                                     alt={brand?.siteName || 'Logo'}
