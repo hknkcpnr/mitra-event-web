@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import { Quote } from 'lucide-react';
+import Image from 'next/image';
 
 interface Testimonial {
     id: number;
@@ -91,11 +92,13 @@ const TestimonialsSlider: React.FC<TestimonialsSliderProps> = ({ data, meta, sho
                                                         <p className="text-[#2D2926]/50 text-xs md:text-sm font-medium tracking-wide uppercase">{testimonial?.role}</p>
                                                     </div>
                                                     {testimonial?.img && (
-                                                        <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-[#E6DDE6] shrink-0">
-                                                            <img
+                                                        <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-[#E6DDE6] shrink-0 relative">
+                                                            <Image
                                                                 src={testimonial?.img}
                                                                 alt={testimonial?.name}
-                                                                className="w-full h-full object-cover"
+                                                                fill
+                                                                sizes="56px"
+                                                                className="object-cover"
                                                             />
                                                         </div>
                                                     )}

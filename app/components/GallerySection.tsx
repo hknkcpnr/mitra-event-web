@@ -1,5 +1,6 @@
 'use client';
 import React from 'react';
+import Image from 'next/image';
 
 interface GalleryItem {
     img: string;
@@ -42,10 +43,12 @@ const GallerySection: React.FC<GallerySectionProps> = ({ images }) => {
                             className={`group relative overflow-hidden rounded-3xl aspect-[4/5] bg-stone-100 cursor-pointer ${index % 4 === 1 || index % 4 === 2 ? 'md:translate-y-12' : ''
                                 }`}
                         >
-                            <img
+                            <Image
                                 src={item.img}
                                 alt={item.alt}
-                                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                                fill
+                                sizes="(max-width: 768px) 50vw, 25vw"
+                                className="object-cover transition-transform duration-700 group-hover:scale-110"
                             />
                             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-center justify-center">
                                 <span className="text-white text-[10px] font-bold tracking-[0.2em] uppercase border border-white/30 px-6 py-2 rounded-full backdrop-blur-sm">
@@ -64,10 +67,12 @@ const GallerySection: React.FC<GallerySectionProps> = ({ images }) => {
                     onClick={() => setSelectedImage(null)}
                 >
                     <div className="relative max-w-5xl w-full h-[80vh] animate-zoomIn">
-                        <img 
+                        <Image 
                             src={selectedImage.img} 
                             alt={selectedImage.alt} 
-                            className="w-full h-full object-contain"
+                            fill
+                            priority
+                            className="object-contain"
                         />
                         <button 
                             className="absolute top-4 right-4 text-white hover:text-[#A68BA6] transition-colors"

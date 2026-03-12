@@ -66,11 +66,15 @@ const NavBar: React.FC<NavBarProps> = ({ whatsappUrl, brand }) => {
                         }
                     }}>
                         {brand?.logo ? (
-                            <img
-                                src={scrolled ? brand.logo : (brand.logoLight || brand.logo)}
-                                alt={brand.siteName || "Logo"}
-                                className="h-10 md:h-12 w-auto object-contain transition-all duration-300"
-                            />
+                            <div className="relative h-10 md:h-12 w-32 md:w-40 transition-all duration-300">
+                                <Image
+                                    src={scrolled ? brand.logo : (brand.logoLight || brand.logo)}
+                                    alt={brand.siteName || "Logo"}
+                                    fill
+                                    priority
+                                    className="object-contain object-left transition-all duration-300"
+                                />
+                            </div>
                         ) : (
                             <>
                                 <span className={`text-xl md:text-2xl font-light tracking-[0.4em] uppercase transition-colors duration-300 ${scrolled ? 'text-[#2D2926]' : 'text-[#2D2926]'}`}>{brand?.siteName?.split(' ')[0] || 'MİTRA'}</span>

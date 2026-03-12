@@ -1,5 +1,6 @@
 import React from 'react';
 import { Instagram, Linkedin, MessageCircle, Mail, MapPin, ArrowRight } from 'lucide-react';
+import Image from 'next/image';
 
 interface FooterProps {
     data: {
@@ -11,6 +12,7 @@ interface FooterProps {
             linkedin: string;
             whatsapp: string;
         };
+        instagramFeed?: { img: string; link: string }[];
         bottomText: string;
         bottomSubtitle: string;
     };
@@ -34,16 +36,61 @@ const Footer: React.FC<FooterProps> = ({ data, brand }) => {
     return (
         <footer className="bg-white border-t border-[#2D2926]/5 pt-24 pb-12 px-6">
             <div className="max-w-7xl mx-auto">
+                {/* Instagram Feed Section */}
+                {data.instagramFeed && data.instagramFeed.length > 0 && (
+                    <div className="mb-24">
+                        <div className="flex flex-col md:flex-row justify-between items-center mb-10 gap-4">
+                            <div>
+                                <h4 className="text-[10px] font-extrabold tracking-[0.4em] uppercase text-[#A68BA6] mb-2">Instagram'da Bizi Takip Edin</h4>
+                                <p className="text-2xl font-serif italic text-[#2D2926]">@mitraevent</p>
+                            </div>
+                            <a 
+                                href={data.socials?.instagram || "https://instagram.com/mitraevent"} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="text-[10px] font-bold tracking-[0.2em] uppercase px-8 py-4 border border-[#2D2926]/10 rounded-full hover:bg-[#2D2926] hover:text-white transition-all duration-500"
+                            >
+                                Tümünü Gör
+                            </a>
+                        </div>
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                            {data.instagramFeed.slice(0, 6).map((post, idx) => (
+                                <a 
+                                    key={idx} 
+                                    href={post.link} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                    className="group relative aspect-square overflow-hidden rounded-2xl shadow-sm"
+                                >
+                                    <Image 
+                                        src={post.img} 
+                                        alt={`Instagram ${idx}`} 
+                                        fill 
+                                        sizes="(max-width: 768px) 50vw, 16vw"
+                                        className="object-cover transition-transform duration-700 group-hover:scale-110"
+                                    />
+                                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                        <Instagram size={24} className="text-white" />
+                                    </div>
+                                </a>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-16 mb-20">
 
                     {/* Brand Column */}
                     <div className="space-y-8">
                         {brand?.logo ? (
-                            <img
-                                src={brand?.logo}
-                                alt={brand?.siteName || 'Logo'}
-                                className="h-12 w-auto object-contain"
-                            />
+                            <div className="relative h-12 w-40">
+                                <Image
+                                    src={brand?.logo}
+                                    alt={brand?.siteName || 'Logo'}
+                                    fill
+                                    className="object-contain object-left"
+                                />
+                            </div>
                         ) : (
                             <div className="flex flex-col leading-none pointer-events-none select-none">
                                 <span className="text-3xl font-light tracking-[0.5em] uppercase text-[#2D2926]">{brand?.siteName?.split(' ')[0] || 'MİTRA'}</span>

@@ -1,5 +1,6 @@
 import React from 'react';
 import { ArrowUpRight } from 'lucide-react';
+import Image from 'next/image';
 
 interface Service {
     title: string;
@@ -49,7 +50,13 @@ const ServicesGrid: React.FC<ServicesGridProps> = ({ data, meta, showIndex }) =>
                                         {idx + 1}
                                     </div>
                                 )}
-                                <img src={service?.img} alt={service?.title} className="w-full h-full object-cover transition-transform duration-[2s] group-hover:scale-105" />
+                                    <Image 
+                                        src={service?.img} 
+                                        alt={service?.title} 
+                                        fill
+                                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                                        className="object-cover transition-transform duration-[2s] group-hover:scale-105" 
+                                    />
                             </div>
                             <div className="space-y-4 px-2">
                                 <span className="text-[#A68BA6] text-[10px] tracking-widest uppercase font-bold">{service?.category}</span>

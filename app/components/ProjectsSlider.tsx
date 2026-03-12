@@ -1,6 +1,7 @@
 "use client";
 import React, { useRef } from 'react';
 import { ChevronLeft, ChevronRight, ArrowUpRight } from 'lucide-react';
+import Image from 'next/image';
 interface Project {
     id: number;
     title: string;
@@ -77,7 +78,13 @@ const ProjectsSlider: React.FC<ProjectsSliderProps> = ({ data, meta, showIndex }
                                         {index + 1}
                                     </div>
                                 )}
-                                <img src={project?.img} alt={project?.title} className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" />
+                                <Image 
+                                    src={project?.img} 
+                                    alt={project?.title} 
+                                    fill
+                                    sizes="(max-width: 768px) 85vw, (max-width: 1024px) 50vw, 33vw"
+                                    className="object-cover transition-transform duration-1000 group-hover:scale-110" 
+                                />
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-8 text-white opacity-90 group-hover:opacity-100 transition-opacity duration-500">
                                     <span className="text-[#E6DDE6] text-[10px] tracking-widest uppercase font-bold mb-3 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500">{project?.category}</span>
                                     <div>

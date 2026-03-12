@@ -189,6 +189,14 @@
       "linkedin": "https://linkedin.com/company/mitraevent",
       "whatsapp": "https://wa.me/905538557612"
     },
+    "instagramFeed": [
+      { "img": "/uploads/img_ca43a0be38.jpg", "link": "https://instagram.com/mitraevent" },
+      { "img": "/uploads/img_50f483ffbe.jpg", "link": "https://instagram.com/mitraevent" },
+      { "img": "/uploads/img_831c5fb10c.jpg", "link": "https://instagram.com/mitraevent" },
+      { "img": "/uploads/img_2e4c31f78a.jpg", "link": "https://instagram.com/mitraevent" },
+      { "img": "/uploads/img_edec48750e.jpg", "link": "https://instagram.com/mitraevent" },
+      { "img": "/uploads/img_9f0026b3c2.jpg", "link": "https://instagram.com/mitraevent" }
+    ],
     "bottomText": "MİTRA EVENT MANAGEMENT",
     "bottomSubtitle": "LUXURY COLLECTIVE",
     "mersisNo": "0000-0000-0000-0000",

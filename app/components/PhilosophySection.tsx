@@ -1,5 +1,6 @@
 import React from 'react';
 import { Flower2 } from 'lucide-react';
+import Image from 'next/image';
 
 interface PhilosophyData {
     quoteLine1: string;
@@ -23,10 +24,12 @@ const PhilosophySection: React.FC<PhilosophySectionProps> = ({ data }) => {
             {/* Background Image with Low Opacity */}
             {data.bgImage && (
                 <div className="absolute inset-0 z-0">
-                    <img
+                    <Image
                         src={data.bgImage}
                         alt="Background"
-                        className="w-full h-full object-cover opacity-[0.15]"
+                        fill
+                        loading="lazy"
+                        className="object-cover opacity-[0.15]"
                     />
                     <div className="absolute inset-0 bg-gradient-to-b from-white/80 via-transparent to-white/80"></div>
                 </div>

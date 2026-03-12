@@ -439,6 +439,7 @@ export const TR_LABELS: Record<string, string> = {
     mersisNo: "MERSİS Numarası",
     taxNumber: "Vergi Numarası",
     taxOffice: "Vergi Dairesi",
+    instagramFeed: "Instagram Feed (Alt Bölüm)",
 
     // Hero Section
     badgeTitle: "Rozet Başlığı",

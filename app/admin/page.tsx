@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useRef } from "react";
-import { Save, AlertCircle, CheckCircle, Loader2, LayoutDashboard, Type, Image as ImageIcon, Briefcase, Camera, Phone, ChevronDown, ChevronRight, MessageSquare, Edit3, Monitor, BarChart3, Users, Clock, Eye, Search, TrendingUp, TrendingDown, Upload, X, LogOut, Lock, User, Settings, KeyRound, Mail, CalendarDays, Plus, List, PieChart, Globe, Download, Trash2, ShieldCheck, Shield } from "lucide-react";
+import { Save, AlertCircle, CheckCircle, Loader2, LayoutDashboard, Type, Image as ImageIcon, Briefcase, Camera, Phone, ChevronDown, ChevronRight, MessageSquare, Edit3, Monitor, BarChart3, Users, Clock, Eye, Search, TrendingUp, TrendingDown, Upload, X, LogOut, Lock, User, Settings, KeyRound, Mail, CalendarDays, Plus, List, PieChart, Globe, Download, Trash2, ShieldCheck, Shield, Menu } from "lucide-react";
 
 // Orijinal sayfa bilesenlerini ice aktar
 import HeroSection from '../components/HeroSection';
@@ -60,6 +60,7 @@ export default function AdminPage() {
         }
         return 'stats';
     });
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
     // Yan menu durumu
     const [isSectionsOpen, setIsSectionsOpen] = useState(false);
@@ -2707,9 +2708,16 @@ export default function AdminPage() {
 
     return (
         <div className="flex h-screen w-screen overflow-hidden bg-gray-50/50 font-sans text-gray-900 selection:bg-[#FFF7ED]">
+            {/* Mobile Sidebar Overlay */}
+            {isSidebarOpen && (
+                <div 
+                    className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[30] lg:hidden animate-in fade-in duration-300"
+                    onClick={() => setIsSidebarOpen(false)}
+                />
+            )}
 
             {/* LEFT SIDEBAR */}
-            <aside className="w-64 bg-white border-r border-[#2D2926]/10 flex flex-col shadow-sm z-20 flex-shrink-0">
+            <aside className={`fixed lg:static inset-y-0 left-0 w-64 bg-white border-r border-[#2D2926]/10 flex flex-col shadow-sm z-[40] flex-shrink-0 transition-transform duration-300 ease-in-out ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
                 {/* Logo Area */}
                 <div className="h-16 flex items-center px-6 border-b border-[#2D2926]/5">
                     <span className="text-xl font-bold tracking-tight text-[#2D2926]">MITRA <span className="font-light text-gray-400">Admin</span></span>
@@ -2721,7 +2729,7 @@ export default function AdminPage() {
                     {/* İstatistikler (Genel Bakış) */}
                     <div className="px-3">
                         <button
-                            onClick={() => setActiveSection('stats')}
+                            onClick={() => { setActiveSection('stats'); setIsSidebarOpen(false); }}
                             className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium transition-all duration-200 ${isStatsView
                                 ? 'bg-orange-50 text-orange-700 font-bold border-l-2 border-orange-500'
                                 : 'text-gray-500 hover:bg-gray-50 hover:text-[#2D2926]'
@@ -2737,7 +2745,7 @@ export default function AdminPage() {
                     {/* Başvurular — Ana Menü */}
                     <div className="px-3">
                         <button
-                            onClick={() => setActiveSection('inquiries')}
+                            onClick={() => { setActiveSection('inquiries'); setIsSidebarOpen(false); }}
                             className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium transition-all duration-200 ${isInquiriesView
                                 ? 'bg-[#F97316]/10 text-[#F97316] font-bold border-l-2 border-[#F97316]'
                                 : 'text-gray-500 hover:bg-gray-50 hover:text-[#2D2926]'
@@ -2758,7 +2766,7 @@ export default function AdminPage() {
                     {/* RESİM GALERİSİ */}
                     <div className="px-3">
                         <button
-                            onClick={() => setActiveSection('media_library')}
+                            onClick={() => { setActiveSection('media_library'); setIsSidebarOpen(false); }}
                             className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium transition-all duration-200 ${isMediaLibraryView
                                 ? 'bg-orange-50 text-orange-700 font-bold border-l-2 border-orange-500'
                                 : 'text-gray-500 hover:bg-gray-50 hover:text-[#2D2926]'
@@ -2775,7 +2783,7 @@ export default function AdminPage() {
                     <div className="px-3">
                         <p className="px-3 py-2 text-[10px] font-bold text-gray-400 tracking-[0.15em] uppercase">Takvimde Organizasyon Oluştur</p>
                         <button
-                            onClick={() => setActiveSection('events')}
+                            onClick={() => { setActiveSection('events'); setIsSidebarOpen(false); }}
                             className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium transition-all duration-200 ${isEventsView
                                 ? 'bg-orange-50 text-orange-700 font-bold border-l-2 border-orange-500'
                                 : 'text-gray-500 hover:bg-gray-50 hover:text-[#2D2926]'
@@ -2806,7 +2814,7 @@ export default function AdminPage() {
 
                     <div className="px-3">
                         <button
-                            onClick={() => setActiveSection('kasa')}
+                            onClick={() => { setActiveSection('kasa'); setIsSidebarOpen(false); }}
                             className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium transition-all duration-200 ${isKasaView
                                 ? 'bg-emerald-50 text-emerald-700 font-bold border-l-2 border-emerald-500'
                                 : 'text-gray-500 hover:bg-gray-50 hover:text-[#2D2926]'
@@ -2836,7 +2844,7 @@ export default function AdminPage() {
                                     return (
                                         <button
                                             key={key}
-                                            onClick={() => setActiveSection(key)}
+                                            onClick={() => { setActiveSection(key); setIsSidebarOpen(false); }}
                                             className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium transition-all duration-200 ${isActive
                                                 ? 'bg-[#FDFCFB] text-[#2D2926] font-bold shadow-sm border-l-2 border-[#2D2926]'
                                                 : 'text-gray-500 hover:bg-gray-50 hover:text-[#2D2926]'
@@ -2866,7 +2874,7 @@ export default function AdminPage() {
                                 {isSettingsOpen && (
                                     <div className="space-y-0.5 mt-1">
                                         <button
-                                            onClick={() => setActiveSection('system_settings')}
+                                            onClick={() => { setActiveSection('system_settings'); setIsSidebarOpen(false); }}
                                             className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium transition-all duration-200 ${activeSection === 'system_settings'
                                                 ? 'bg-[#FDFCFB] text-[#2D2926] font-bold shadow-sm border-l-2 border-[#2D2926]'
                                                 : 'text-gray-500 hover:bg-gray-50 hover:text-[#2D2926]'
@@ -2876,7 +2884,7 @@ export default function AdminPage() {
                                             Genel Ayarlar
                                         </button>
                                         <button
-                                            onClick={() => setActiveSection('system_users')}
+                                            onClick={() => { setActiveSection('system_users'); setIsSidebarOpen(false); }}
                                             className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium transition-all duration-200 ${activeSection === 'system_users'
                                                 ? 'bg-[#FDFCFB] text-[#2D2926] font-bold shadow-sm border-l-2 border-[#2D2926]'
                                                 : 'text-gray-500 hover:bg-gray-50 hover:text-[#2D2926]'
@@ -2886,7 +2894,7 @@ export default function AdminPage() {
                                             Kullanıcı Yönetimi
                                         </button>
                                         <button
-                                            onClick={() => setActiveSection('system_sessions')}
+                                            onClick={() => { setActiveSection('system_sessions'); setIsSidebarOpen(false); }}
                                             className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium transition-all duration-200 ${activeSection === 'system_sessions'
                                                 ? 'bg-[#FDFCFB] text-[#2D2926] font-bold shadow-sm border-l-2 border-[#2D2926]'
                                                 : 'text-gray-500 hover:bg-gray-50 hover:text-[#2D2926]'
@@ -2896,7 +2904,7 @@ export default function AdminPage() {
                                             Oturum Geçmişi
                                         </button>
                                         <button
-                                            onClick={() => setActiveSection('system_meta')}
+                                            onClick={() => { setActiveSection('system_meta'); setIsSidebarOpen(false); }}
                                             className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium transition-all duration-200 ${activeSection === 'system_meta'
                                                 ? 'bg-[#FDFCFB] text-[#2D2926] font-bold shadow-sm border-l-2 border-[#2D2926]'
                                                 : 'text-gray-500 hover:bg-gray-50 hover:text-[#2D2926]'
@@ -2940,9 +2948,16 @@ export default function AdminPage() {
             <main className="flex-1 flex flex-col h-full overflow-hidden relative">
 
                 {/* TOP HEADER */}
-                <header className="h-16 bg-white border-b border-[#2D2926]/5 flex items-center justify-between px-6 shadow-sm z-10 flex-shrink-0">
-                    <div className="flex items-center gap-3">
-                        <h1 className="text-lg font-bold text-[#2D2926] flex items-center gap-2">
+                <header className="h-16 bg-white border-b border-[#2D2926]/5 flex items-center justify-between px-4 md:px-6 shadow-sm z-10 flex-shrink-0">
+                    <div className="flex items-center gap-2 md:gap-3">
+                        {/* Mobile Sidebar Toggle */}
+                        <button 
+                            onClick={() => setIsSidebarOpen(true)}
+                            className="p-2 -ml-2 lg:hidden text-gray-400 hover:text-orange-600 transition-colors"
+                        >
+                            <Menu size={20} />
+                        </button>
+                        <h1 className="text-sm md:text-lg font-bold text-[#2D2926] flex items-center gap-2">
                             {getPageTitle()}
                         </h1>
                         <span className="hidden md:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-bold bg-[#FFF7ED]/30 text-[#2D2926] border border-[#2D2926]/10 uppercase tracking-widest">

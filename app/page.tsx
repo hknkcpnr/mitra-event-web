@@ -1,17 +1,30 @@
 import React from 'react';
+import dynamic from 'next/dynamic';
 import { prisma } from '@/lib/prisma';
 import NavBar from './components/NavBar';
 import HeroSection from './components/HeroSection';
 import PhilosophySection from './components/PhilosophySection';
 import ServicesGrid from './components/ServicesGrid';
-import ProjectsSlider from './components/ProjectsSlider';
-import TestimonialsSlider from './components/TestimonialsSlider';
-import GallerySection from './components/GallerySection';
-import InquiryForm from './components/InquiryForm';
-import Footer from './components/Footer';
 
-// Use Next.js Revalidate for edge caching if necessary (optional)
-export const revalidate = 60; // 1 dakika önbelleğe alır ve sayfaları fişekler.
+// Dynamic imports for off-screen components to improve initial TTI and LCP
+const ProjectsSlider = dynamic(() => import('./components/ProjectsSlider'), { 
+  loading: () => <div className="h-96 bg-gray-50 animate-pulse rounded-3xl m-6" /> 
+});
+const TestimonialsSlider = dynamic(() => import('./components/TestimonialsSlider'), { 
+  loading: () => <div className="h-64 bg-gray-50 animate-pulse rounded-3xl m-6" /> 
+});
+const GallerySection = dynamic(() => import('./components/GallerySection'), { 
+  loading: () => <div className="h-96 bg-gray-50 animate-pulse rounded-3xl m-6" /> 
+});
+const InquiryForm = dynamic(() => import('./components/InquiryForm'), { 
+  loading: () => <div className="h-96 bg-gray-50 animate-pulse rounded-3xl m-6" /> 
+});
+const Footer = dynamic(() => import('./components/Footer'), { 
+  loading: () => <div className="h-64 bg-gray-900/5 animate-pulse" /> 
+});
+
+// Use Next.js Revalidate for edge caching - increased to 1 hour for better performance
+export const revalidate = 3600; 
 
 /**
  * Ana Web Sayfası (Landing Page)
