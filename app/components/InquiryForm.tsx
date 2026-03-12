@@ -152,7 +152,7 @@ const InquiryForm: React.FC<InquiryFormProps> = ({ data }) => {
                                 <select
                                     value={formData.eventType}
                                     onChange={(e) => setFormData({ ...formData, eventType: e.target.value })}
-                                    className="w-full bg-transparent border-b border-[#2D2926]/10 py-3 pr-10 outline-none focus:border-[#A68BA6] focus:border-b-2 transition-all appearance-none cursor-pointer font-light text-[17px] text-[#2D2926]"
+                                    className="w-full bg-transparent border-b border-[#2D2926]/10 py-3 pr-10 outline-none focus:border-[#A68BA6] focus:border-b-2 transition-all appearance-none cursor-pointer font-light text-[17px] text-[#2D2926] px-2"
                                 >
                                     {data.eventTypes?.map(type => (
                                         <option key={type} value={type} className="text-[#2D2926] bg-white">{type}</option>
