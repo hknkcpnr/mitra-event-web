@@ -1,5 +1,4 @@
-import React from 'react';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Sparkles } from 'lucide-react';
 import Image from 'next/image';
 
 interface HeroData {
@@ -43,7 +42,10 @@ const HeroSection: React.FC<HeroSectionProps> = ({ data }) => {
                     <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 lg:gap-8 animate-fadeIn">
                         {/* Primary CTA: Luxury Aesthetic */}
                         <button className="relative group w-full sm:w-auto overflow-hidden bg-[#2D2926] text-white px-12 py-5 rounded-full text-[10px] lg:text-[11px] font-bold tracking-[0.4em] uppercase transition-all duration-500 hover:shadow-2xl hover:shadow-[#A68BA6]/30 hover:-translate-y-1 active:scale-95">
-                            <span className="relative z-10">{data?.primaryButtonText}</span>
+                            <div className="relative z-10 flex items-center justify-center space-x-4">
+                                <Sparkles size={16} className="text-[#A68BA6] transition-all duration-500 group-hover:rotate-12 group-hover:scale-125" />
+                                <span className="pt-0.5">{data?.primaryButtonText}</span>
+                            </div>
                             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:animate-shimmer"></div>
                         </button>
                         
