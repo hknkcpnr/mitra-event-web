@@ -1,10 +1,11 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import fs from 'fs/promises';
 import path from 'path';
 import { v2 as cloudinary } from 'cloudinary';
 import { getSessionWithUser } from '@/lib/auth';
 
+// Cloudinary Yapılandırması
 cloudinary.config({
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
     api_key: process.env.CLOUDINARY_API_KEY,
@@ -13,43 +14,53 @@ cloudinary.config({
 
 /**
  * Galeri resimlerini listeleyen GET metodu.
- * Hem veritabanındaki (Cloudinary) hem de yerel sunucudaki resimleri harmanlar.
+ * Hem veritabanındaki (Cloudinary/MySQL) hem de yerel sunucudaki resimleri harmanlar.
  */
 export async function GET() {
     try {
-        // DB'den resimleri çek
+        console.log('GET /api/gallery - DB request started');
+        
+        // Veritabanından resimleri çek (Hızlı cevap için 100 ile sınırlı)
         const dbImages = await prisma.galleryImage.findMany({
-            orderBy: { createdAt: 'desc' }
+            orderBy: { createdAt: 'desc' },
+            take: 100
         });
+        
+        console.log(`GET /api/gallery - Found ${dbImages.length} images in DB`);
 
-        // Eskiden kalma lokal upload klasörünü de oku (geriye dönük uyumluluk)
+        // Geriye dönük uyumluluk: Yerel uploads klasörünü kontrol et
         const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
         let localFiles: string[] = [];
+        
+        // Vercel/Prod ortamında bu klasör genellikle salt-okunur veya boştur
         try {
-            await fs.access(uploadsDir);
-            const files = await fs.readdir(uploadsDir);
-            localFiles = files.filter(file => /\.(jpg|jpeg|png|gif|webp)$/i.test(file));
-        } catch {
-            // Uploads klasörü yoksa görmezden gel
+            const dirExists = await fs.access(uploadsDir).then(() => true).catch(() => false);
+            if (dirExists) {
+                const files = await fs.readdir(uploadsDir);
+                localFiles = files.filter(file => /\.(jpg|jpeg|png|gif|webp)$/i.test(file));
+            }
+        } catch (dirErr) {
+            console.warn('Local uploads directory not accessible (expected in prod):', dirErr);
         }
 
+        // DB'den gelenleri formatla
         const images = dbImages.map(img => ({
             id: img.id,
             name: img.title || 'Resim',
             url: img.url,
             size: img.size || 0,
             publicId: img.publicId,
-            time: img.createdAt.getTime()
+            time: img.createdAt ? new Date(img.createdAt).getTime() : Date.now()
         }));
 
-        // DB'de olmayan lokal dosyaları da ekleyelim
-        for (const fileName of localFiles) {
+        // DB'de olmayıp lokalde olanları ekle
+        for (const fileName of localFiles.slice(0, 50)) {
             const url = `/uploads/${fileName}`;
             if (!images.some(img => img.url === url)) {
                 try {
                     const stats = await fs.stat(path.join(uploadsDir, fileName));
                     images.push({
-                        id: fileName, // lokal dosyalar için id yerine fileName
+                        id: fileName,
                         name: fileName,
                         url: url,
                         size: stats.size,
@@ -60,17 +71,18 @@ export async function GET() {
             }
         }
 
-        // Zamanlarına göre yeni eklenenler en üstte kalacak şekilde sırala
+        // En yeniden en eskiye sırala
         images.sort((a, b) => b.time - a.time);
 
         return NextResponse.json({ images });
-    } catch (error) {
-        console.error('Error reading gallery:', error);
-        return NextResponse.json({ error: 'Resimler yüklenemedi' }, { status: 500 });
+    } catch (error: any) {
+        console.error('CRITICAL: Gallery GET Error:', error);
+        return NextResponse.json({ 
+            error: 'Veritabanı bağlantısı kurulamadı veya resimler okunurken bir hata oluştu.',
+            details: error.message 
+        }, { status: 500 });
     }
 }
-
-import { NextRequest } from 'next/server';
 
 /**
  * Galeri resmini tamamen silen DELETE metodu.
@@ -80,59 +92,62 @@ export async function DELETE(request: NextRequest) {
     try {
         const session = await getSessionWithUser(request);
         if (!session) {
-            return NextResponse.json({ error: 'Yetkisiz erişim. Fotoğraf silmek için yönetici olmalısınız.' }, { status: 401 });
+            return NextResponse.json({ error: 'Yetkisiz erişim. Fotoğraf silmek için oturum açmalısınız.' }, { status: 401 });
         }
 
         const { searchParams } = new URL(request.url);
-        const id = searchParams.get('id'); // ID varsa öncelikli (veritabanı silme)
+        const id = searchParams.get('id');
         const filename = searchParams.get('file');
 
         if (!id && !filename) {
-            return NextResponse.json({ error: 'Dosya veya ID belirtilmedi' }, { status: 400 });
+            return NextResponse.json({ error: 'Silinecek resmi belirtmek için ID veya dosya adı gereklidir.' }, { status: 400 });
         }
 
-        // Veritabanı ID si gelmişse ve Prisma'da varsa:
+        // 1. Veritabanında Kayıtlı Resim Silme
         if (id) {
             const image = await prisma.galleryImage.findUnique({ where: { id } }).catch(() => null);
             if (image) {
-                // Cloudinary'deyse oradan sil
+                // Cloudinary'den temizle
                 if (image.publicId && process.env.CLOUDINARY_CLOUD_NAME) {
-                    await cloudinary.uploader.destroy(image.publicId);
+                    try {
+                        await cloudinary.uploader.destroy(image.publicId);
+                    } catch (clErr) {
+                        console.error('Cloudinary deletion failed:', clErr);
+                    }
                 }
-                // Veritabanından sil
+                
+                // DB'den sil
                 await prisma.galleryImage.delete({ where: { id } });
 
-                // Yine de lokal bir url ise bilgisayardan da sil:
+                // Lokal dosyayı da silmeyi dene
                 if (image.url.startsWith('/uploads/')) {
                     const filePath = path.join(process.cwd(), 'public', image.url);
                     try { await fs.unlink(filePath); } catch { }
                 }
 
-                return NextResponse.json({ success: true, message: 'Resim silindi' });
+                return NextResponse.json({ success: true, message: 'Resim başarıyla sistemden kaldırıldı.' });
             }
         }
 
-        // Fallback: Eski "public/uploads" lokal resim silme
+        // 2. Sadece Lokal Dosya Silme (Fallback)
         if (filename) {
             const uploadsDir = path.resolve(process.cwd(), 'public', 'uploads');
             const filePath = path.resolve(uploadsDir, filename);
 
-            if (!filePath.startsWith(uploadsDir)) {
-                return NextResponse.json({ error: 'Geçersiz dosya yolu' }, { status: 400 });
-            }
-
-            try {
-                await fs.access(filePath);
-                await fs.unlink(filePath);
-                return NextResponse.json({ success: true, message: 'Lokal resim silindi' });
-            } catch {
-                return NextResponse.json({ error: 'Lokal dosya bulunamadı' }, { status: 404 });
+            if (filePath.startsWith(uploadsDir)) {
+                try {
+                    await fs.access(filePath);
+                    await fs.unlink(filePath);
+                    return NextResponse.json({ success: true, message: 'Yerel dosya silindi.' });
+                } catch {
+                    return NextResponse.json({ error: 'Dosya sistemde bulunamadı.' }, { status: 404 });
+                }
             }
         }
 
-        return NextResponse.json({ error: 'Resim bulunamadı' }, { status: 404 });
-    } catch (error) {
-        console.error('Error deleting image:', error);
-        return NextResponse.json({ error: 'Resim silinemedi' }, { status: 500 });
+        return NextResponse.json({ error: 'Silinecek resim bulunamadı.' }, { status: 404 });
+    } catch (error: any) {
+        console.error('DELETE /api/gallery Error:', error);
+        return NextResponse.json({ error: 'Silme işlemi sırasında sunucu hatası oluştu.' }, { status: 500 });
     }
 }

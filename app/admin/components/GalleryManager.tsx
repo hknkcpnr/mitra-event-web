@@ -33,15 +33,17 @@ export default function GalleryManager({ settings }: GalleryManagerProps) {
         console.log('Fetching gallery images...');
         try {
             const res = await fetch('/api/gallery');
-            const data = await res.json();
             if (res.ok) {
+                const data = await res.json();
                 setImages(data.images || []);
             } else {
-                setMessage({ type: 'error', text: data.error || 'Resimler yüklenemedi' });
+                const text = await res.text();
+                console.error('Gallery API failed with status:', res.status, text);
+                setMessage({ type: 'error', text: `Hata (${res.status}): Resimler yüklenemedi` });
             }
-        } catch (error) {
-            console.error('Fetch error:', error);
-            setMessage({ type: 'error', text: 'Bağlantı hatası' });
+        } catch (error: any) {
+            console.error('Fetch error details:', error);
+            setMessage({ type: 'error', text: `Bağlantı hatası: ${error.message || 'Sunucuya ulaşılamıyor'}` });
         } finally {
             setIsLoading(false);
         }
