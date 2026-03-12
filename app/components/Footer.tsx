@@ -98,12 +98,6 @@ const Footer: React.FC<FooterProps> = ({ data, brand }) => {
                                     {data.address}
                                 </span>
                             </li>
-                            <li className="flex items-center gap-4 group">
-                                <div className="p-2.5 rounded-xl bg-stone-50 text-stone-500 transition-colors group-hover:bg-stone-100">
-                                    <Mail size={16} />
-                                </div>
-                                <span className="text-sm font-light text-[#2D2926]/70">{data.email}</span>
-                            </li>
                         </ul>
                     </div>
 
