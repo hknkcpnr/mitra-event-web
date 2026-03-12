@@ -72,8 +72,8 @@ const InquiryForm: React.FC<InquiryFormProps> = ({ data }) => {
     };
 
     return (
-        <section id="iletişim" className="min-h-screen flex flex-col pt-0 pb-24 px-6 bg-[#F8F7F5]">
-            <div className="max-w-7xl mx-auto bg-white rounded-[4rem] p-10 md:p-24 shadow-2xl flex flex-col lg:flex-row items-center gap-20">
+        <section id="iletişim" className="min-h-screen flex flex-col pt-0 pb-24 px-0 md:px-6 bg-[#F8F7F5]">
+            <div className="max-w-7xl mx-auto bg-white rounded-none md:rounded-[4rem] p-8 md:p-24 shadow-none md:shadow-2xl flex flex-col lg:flex-row items-center gap-12 md:gap-20">
                 <div className="lg:w-1/2">
                     <h2 className="text-4xl md:text-6xl font-serif mb-8 leading-tight">
                         {data.titleLine1} <br /> <span className="italic font-light">{data.titleLine2}</span>
@@ -95,7 +95,7 @@ const InquiryForm: React.FC<InquiryFormProps> = ({ data }) => {
                             <span className="text-sm font-semibold tracking-wider uppercase">{data.phone}</span>
                         </div>
                         <div className="pt-4">
-                            <a href={data.whatsappUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center space-x-4 bg-[#25D366]/10 text-[#25D366] px-8 py-4 rounded-full hover:bg-[#25D366] hover:text-white transition-all duration-300">
+                            <a href={data.whatsappUrl} target="_blank" rel="noopener noreferrer" className="flex md:inline-flex items-center justify-center space-x-4 bg-[#25D366]/10 text-[#25D366] px-8 py-4 rounded-full hover:bg-[#25D366] hover:text-white transition-all duration-300 w-full md:w-auto">
                                 <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-message-circle">
                                     <path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"></path>
                                 </svg>
