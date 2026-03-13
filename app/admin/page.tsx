@@ -1040,9 +1040,9 @@ export default function AdminPage() {
                                         </td>
                                         <td className="px-6 py-4 text-[#2D2926]">{ev.firstName} {ev.lastName}</td>
                                         <td className="px-6 py-4">{ev.phone}</td>
-                                        <td className="px-6 py-4 text-right font-medium text-gray-500">{ev.price || 0} ₺</td>
+                                        <td className="px-6 py-4 text-right font-medium text-gray-500">{Number(ev.price || 0).toLocaleString('tr-TR')} ₺</td>
                                         <td className="px-6 py-4 text-right font-bold text-orange-600">
-                                            {Number(ev.price || 0) - Number(ev.deposit || 0)} ₺
+                                            {(ev.paymentStatus === 'alindi' ? 0 : (Number(ev.price || 0) - Number(ev.deposit || 0))).toLocaleString('tr-TR')} ₺
                                         </td>
                                         <td className="px-6 py-4">
                                             <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider ${ev.paymentStatus === 'alindi' ? 'bg-green-100 text-green-700' :
@@ -1314,7 +1314,7 @@ export default function AdminPage() {
                                                     <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-100">
                                                         <div className="text-xs font-bold text-gray-400 uppercase tracking-widest">Kalan Ödeme</div>
                                                         <div className="text-xl font-black text-[#2D2926]">
-                                                            {Number(eventForm.price || 0) - Number(eventForm.deposit || 0)} ₺
+                                                            {(eventForm.paymentStatus === 'alindi' ? 0 : (Number(eventForm.price || 0) - Number(eventForm.deposit || 0))).toLocaleString('tr-TR')} ₺
                                                         </div>
                                                     </div>
                                                 </div>
@@ -1712,7 +1712,7 @@ export default function AdminPage() {
                                     <div className="flex items-center justify-between">
                                         <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">Kalan Ödeme</span>
                                         <span className="text-xl font-black text-[#2D2926]">
-                                            {(Number(kasaEditForm.price || 0) - Number(kasaEditForm.deposit || 0)).toLocaleString('tr-TR')} ₺
+                                            {(kasaEditForm.paymentStatus === 'alindi' ? 0 : (Number(kasaEditForm.price || 0) - Number(kasaEditForm.deposit || 0))).toLocaleString('tr-TR')} ₺
                                         </span>
                                     </div>
                                 </div>
