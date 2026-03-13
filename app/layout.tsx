@@ -55,7 +55,7 @@ export async function generateMetadata() {
       images: meta.ogImage ? [meta.ogImage] : undefined,
     },
     icons: {
-      icon: meta.favicon || "/favicon.ico",
+      icon: meta.favicon || '/favicon.png',
     },
   };
 }
