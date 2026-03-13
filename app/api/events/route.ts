@@ -95,7 +95,7 @@ export async function POST(request: NextRequest) {
         lastName: lastName.trim(),
         phone: phone.trim(),
         price: price || '',
-        deposit: deposit || '',
+        deposit: paymentStatus === 'alindi' ? '' : (deposit || ''),
         paymentStatus: paymentStatus || 'beklemede',
         reminderDays: Number.isNaN(Number(reminderDays)) ? 0 : Number(reminderDays),
       } as any,
@@ -128,23 +128,29 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'Organizasyon bulunamadı.' }, { status: 404 });
     }
 
+    const updateData: any = {
+      ...(title !== undefined && { title }),
+      ...(date !== undefined && { date: date ? new Date(date) : null }),
+      ...(description !== undefined && { description }),
+      ...(eventType !== undefined && { eventType }),
+      ...(firstName !== undefined && { firstName }),
+      ...(lastName !== undefined && { lastName }),
+      ...(phone !== undefined && { phone }),
+      ...(price !== undefined && { price }),
+      ...(deposit !== undefined && { deposit }),
+      ...(paymentStatus !== undefined && { paymentStatus }),
+      ...(reminderDays !== undefined && {
+        reminderDays: Number.isNaN(Number(reminderDays)) ? existing.reminderDays : Number(reminderDays),
+      }),
+    };
+
+    if (paymentStatus === 'alindi') {
+      updateData.deposit = '';
+    }
+
     const updatedEvent = await prisma.event.update({
       where: { id },
-      data: {
-        ...(title !== undefined && { title }),
-        ...(date !== undefined && { date: date ? new Date(date) : null }),
-        ...(description !== undefined && { description }),
-        ...(eventType !== undefined && { eventType }),
-        ...(firstName !== undefined && { firstName }),
-        ...(lastName !== undefined && { lastName }),
-        ...(phone !== undefined && { phone }),
-        ...(price !== undefined && { price }),
-        ...(deposit !== undefined && { deposit }),
-        ...(paymentStatus !== undefined && { paymentStatus }),
-        ...(reminderDays !== undefined && {
-          reminderDays: Number.isNaN(Number(reminderDays)) ? existing.reminderDays : Number(reminderDays),
-        }),
-      } as any,
+      data: updateData,
     });
 
     return NextResponse.json({ success: true, event: toResponseEvent(updatedEvent) }, { status: 200 });
