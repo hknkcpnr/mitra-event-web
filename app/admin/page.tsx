@@ -989,7 +989,7 @@ export default function AdminPage() {
                                                                 <div className="mt-1 flex justify-between items-center text-[8px] font-bold opacity-80">
                                                                     <span className={style.text}>Kalan:</span>
                                                                     <span className={style.text}>
-                                                                        {Number(ev.price) - Number(ev.deposit || 0)} ₺
+                                                                        {(ev.paymentStatus === 'alindi' ? 0 : (Number(ev.price) - Number(ev.deposit || 0))).toLocaleString('tr-TR')} ₺
                                                                     </span>
                                                                 </div>
                                                             )}
