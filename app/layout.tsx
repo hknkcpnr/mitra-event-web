@@ -55,7 +55,11 @@ export async function generateMetadata() {
       images: meta.ogImage ? [meta.ogImage] : undefined,
     },
     icons: {
-      icon: meta.favicon || '/favicon.png',
+      icon: [
+        { url: (meta.favicon || '/favicon.png') + '?v=' + Date.now() },
+      ],
+      shortcut: [(meta.favicon || '/favicon.png') + '?v=' + Date.now()],
+      apple: [(meta.favicon || '/favicon.png') + '?v=' + Date.now()],
     },
   };
 }
