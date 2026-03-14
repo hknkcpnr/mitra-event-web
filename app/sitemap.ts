@@ -1,7 +1,7 @@
 import { MetadataRoute } from 'next';
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = 'https://mitra-event-web.vercel.app';
+  const baseUrl = 'https://mitraevent.com.tr';
 
   return [
     {
