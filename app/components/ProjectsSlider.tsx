@@ -33,18 +33,24 @@ const ProjectsSlider: React.FC<ProjectsSliderProps> = ({ data, meta, showIndex }
     const scroll = (direction: 'left' | 'right') => {
         if (scrollContainerRef.current) {
             const container = scrollContainerRef.current;
-            const item = container.firstElementChild as HTMLElement;
-            if (!item) return;
+            const items = Array.from(container.children) as HTMLElement[];
+            if (items.length === 0) return;
 
-            // Bir kartın genişliği + boşluk (gap-6 = 24px)
-            const step = item.offsetWidth + 24;
+            const scrollLeft = container.scrollLeft;
             
-            // Mevcut pozisyonu adıma bölerek hangi indekste olduğumuzu bul (yuvarlayarak)
-            const currentIndex = Math.round(container.scrollLeft / step);
-            const targetIndex = direction === 'left' ? currentIndex - 1 : currentIndex + 1;
+            // Mevcut görünür indeksi bul (küçük bir tolerans payı ile)
+            let currentIndex = items.findIndex(item => item.offsetLeft >= scrollLeft - 10);
+            
+            if (currentIndex === -1) currentIndex = 0;
 
+            let targetIndex = direction === 'left' ? currentIndex - 1 : currentIndex + 1;
+            
+            // Sınırları kontrol et
+            targetIndex = Math.max(0, Math.min(items.length - 1, targetIndex));
+            
+            // Hedef kartın tam başlangıç noktasına kaydır
             container.scrollTo({ 
-                left: targetIndex * step, 
+                left: items[targetIndex].offsetLeft, 
                 behavior: 'smooth' 
             });
         }
