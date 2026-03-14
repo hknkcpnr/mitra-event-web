@@ -33,30 +33,13 @@ const ProjectsSlider: React.FC<ProjectsSliderProps> = ({ data, meta, showIndex }
     const scroll = (direction: 'left' | 'right') => {
         if (scrollContainerRef.current) {
             const container = scrollContainerRef.current;
-            const items = Array.from(container.children) as HTMLElement[];
-            if (items.length === 0) return;
-
-            // Görünür olan merkezi resmi bul
-            const center = container.scrollLeft + container.offsetWidth / 2;
-            let currentIndex = 0;
-            let minDistance = Infinity;
-
-            items.forEach((item, index) => {
-                const itemCenter = item.offsetLeft + item.offsetWidth / 2;
-                const distance = Math.abs(itemCenter - center);
-                if (distance < minDistance) {
-                    minDistance = distance;
-                    currentIndex = index;
-                }
-            });
-
-            const targetIndex = direction === 'left' ? currentIndex - 1 : currentIndex + 1;
-
-            if (targetIndex >= 0 && targetIndex < items.length) {
-                items[targetIndex].scrollIntoView({
-                    behavior: 'smooth',
-                    block: 'nearest',
-                    inline: 'start'
+            const firstItem = container.firstElementChild as HTMLElement;
+            if (firstItem) {
+                // Kartın genişliği + gap (24px)
+                const scrollAmount = firstItem.offsetWidth + 24;
+                container.scrollBy({ 
+                    left: direction === 'left' ? -scrollAmount : scrollAmount, 
+                    behavior: 'smooth' 
                 });
             }
         }
@@ -92,7 +75,7 @@ const ProjectsSlider: React.FC<ProjectsSliderProps> = ({ data, meta, showIndex }
                         {data?.map((project, index) => (
                             <div
                                 key={project?.id || index}
-                                className="relative flex-shrink-0 w-[240px] sm:w-[280px] md:w-[320px] lg:w-[350px] aspect-[4/5] rounded-[3rem] overflow-hidden group snap-start shadow-xl hover:shadow-2xl transition-all duration-700 bg-white"
+                                className="relative flex-shrink-0 w-[240px] sm:w-[280px] md:w-[320px] lg:w-[350px] aspect-[4/5] rounded-[3rem] overflow-hidden group snap-start snap-always shadow-xl hover:shadow-2xl transition-all duration-700 bg-white"
                             >
                                 {showIndex && (
                                     <div className="absolute top-6 left-6 z-[30] w-10 h-10 bg-orange-600 text-white rounded-2xl flex items-center justify-center font-black shadow-2xl border-2 border-white/30 animate-in zoom-in duration-300">
