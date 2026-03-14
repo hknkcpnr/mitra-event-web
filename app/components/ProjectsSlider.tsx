@@ -73,8 +73,8 @@ const ProjectsSlider: React.FC<ProjectsSliderProps> = ({ data, meta, showIndex }
                     </div>
                 </div>
 
-                {/* Swiper Slider */}
-                <div className="w-full relative">
+                {/* Swiper Slider Wrapper - Limited to ~80% width and centered */}
+                <div className="w-full lg:w-[85%] xl:w-[80%] mx-auto relative rounded-[3.5rem] overflow-hidden">
                     <Swiper
                         onSwiper={setSwiper}
                         onSlideChange={(s) => {
@@ -83,14 +83,14 @@ const ProjectsSlider: React.FC<ProjectsSliderProps> = ({ data, meta, showIndex }
                         }}
                         modules={[Navigation]}
                         spaceBetween={30}
-                        className="!overflow-visible"
+                        className="mySwiper"
                         grabCursor={true}
                         breakpoints={{
-                            // Mobile: 1.2 slides (shows next one partially)
-                            320: { slidesPerView: 1.2, spaceBetween: 16 },
-                            // Tablet: 2.2 slides
-                            768: { slidesPerView: 2.2, spaceBetween: 24 },
-                            // Desktop: Exactly 3 slides
+                            // Mobile: 1.1 slides
+                            320: { slidesPerView: 1.1, spaceBetween: 16 },
+                            // Tablet: 2.1 slides
+                            768: { slidesPerView: 2.1, spaceBetween: 24 },
+                            // Desktop: Exactly 3 slides within the 80% container
                             1024: { slidesPerView: 3, spaceBetween: 30 }
                         }}
                     >
