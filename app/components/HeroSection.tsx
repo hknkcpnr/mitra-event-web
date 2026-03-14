@@ -25,7 +25,7 @@ interface HeroSectionProps {
 const HeroSection: React.FC<HeroSectionProps> = ({ data }) => {
     return (
         <section className="relative min-h-[auto] lg:min-h-screen flex items-center px-6 md:px-12 pt-32 lg:pt-28 pb-12 lg:pb-20 overflow-hidden">
-            <div className="max-w-7xl mx-auto w-full grid lg:grid-cols-12 gap-10 lg:gap-16 items-center">
+            <div className="max-w-6xl mx-auto w-full grid lg:grid-cols-12 gap-10 lg:gap-16 items-center">
                 {/* Text Content */}
                 <div className="lg:col-span-6 z-10 text-center lg:text-left">
                     <div className="overflow-hidden mb-6 lg:mb-8">
@@ -71,7 +71,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({ data }) => {
 
                 {/* Puzzle Image Grid */}
                 <div className="lg:col-span-6 relative mt-10 lg:mt-0">
-                    <div className="grid grid-cols-12 grid-rows-12 gap-3 lg:gap-4 h-[450px] sm:h-[550px] md:h-[650px] lg:h-[750px] animate-puzzleReveal">
+                    <div className="grid grid-cols-12 grid-rows-12 gap-3 lg:gap-4 h-[400px] sm:h-[500px] md:h-[600px] lg:h-[650px] animate-puzzleReveal">
                         {/* Piece 1: Large Center-Left */}
                         <div className="col-span-7 row-span-8 overflow-hidden rounded-2xl lg:rounded-3xl shadow-2xl relative group">
                             <Image

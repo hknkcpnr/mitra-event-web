@@ -23,7 +23,7 @@ const GallerySection: React.FC<GallerySectionProps> = ({ images }) => {
 
     return (
         <section id="galeri" className="py-24 px-6 bg-white overflow-hidden">
-            <div className="max-w-7xl mx-auto mb-16 px-4">
+            <div className="max-w-6xl mx-auto mb-16 px-4">
                 <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
                     <div className="space-y-4">
                         <span className="text-[10px] font-bold tracking-[0.3em] uppercase text-[#A68BA6] block">Anlardan Kareler</span>
@@ -34,7 +34,7 @@ const GallerySection: React.FC<GallerySectionProps> = ({ images }) => {
                 </div>
             </div>
 
-            <div className="max-w-[1600px] mx-auto">
+            <div className="max-w-6xl mx-auto">
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     {images.map((item, index) => (
                         <div

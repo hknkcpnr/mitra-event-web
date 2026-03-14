@@ -30,11 +30,11 @@ interface ServicesGridProps {
 const ServicesGrid: React.FC<ServicesGridProps> = ({ data, meta, showIndex }) => {
     return (
         <section id="hizmetler" className="scroll-mt-24 min-h-screen flex flex-col justify-center py-24 px-6 md:px-12 bg-[#FDFCFB]">
-            <div className="max-w-7xl mx-auto">
-                <div className="flex flex-col md:flex-row justify-between items-end mb-24 gap-8">
+            <div className="max-w-6xl mx-auto">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-24 gap-8">
                     <div className="max-w-xl">
                         <span className="text-[#A68BA6] text-xs tracking-[0.4em] uppercase font-bold mb-6 block">{meta?.badge}</span>
-                        <h2 className="text-4xl md:text-6xl font-serif">{meta?.titleLine1} <br /> {meta?.titleLine2}</h2>
+                        <h2 className="text-4xl md:text-5xl font-serif">{meta?.titleLine1} <br /> {meta?.titleLine2}</h2>
                     </div>
                     <p className="text-[#6B6661] max-w-xs text-sm font-light italic">
                         {meta?.description}
