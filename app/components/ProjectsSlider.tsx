@@ -29,38 +29,48 @@ interface ProjectsSliderProps {
  */
 const ProjectsSlider: React.FC<ProjectsSliderProps> = ({ data, meta, showIndex }) => {
     const scrollContainerRef = useRef<HTMLDivElement>(null);
+    const [activeIndex, setActiveIndex] = React.useState(0);
 
-    const scroll = (direction: 'left' | 'right') => {
+    // Aktif indeksi kaydırıcı konumuyla eşle
+    React.useEffect(() => {
         if (scrollContainerRef.current) {
             const container = scrollContainerRef.current;
             const items = Array.from(container.children) as HTMLElement[];
-            if (items.length <= 1) return;
+            if (items[activeIndex]) {
+                container.scrollTo({
+                    left: items[activeIndex].offsetLeft - (window.innerWidth < 768 ? 24 : 0),
+                    behavior: 'smooth'
+                });
+            }
+        }
+    }, [activeIndex]);
 
+    const scrollLeft = () => {
+        setActiveIndex((prev) => (prev > 0 ? prev - 1 : prev));
+    };
+
+    const scrollRight = () => {
+        setActiveIndex((prev) => (prev < data.length - 1 ? prev + 1 : prev));
+    };
+
+    // Manuel kaydırmada indeksi güncelle (Opsiyonel ama stabilite için iyi)
+    const handleScroll = () => {
+        if (scrollContainerRef.current) {
+            const container = scrollContainerRef.current;
+            const items = Array.from(container.children) as HTMLElement[];
             const scrollLeft = container.scrollLeft;
             
-            // Şu anki kaydırma pozisyonuna EN YAKIN olan resmin indeksini bul
-            // Bu yöntem mobil/masaüstü fark etmeksizin nerede olduğumuzu en net söyleyen yoldur.
-            const currentIndex = items.reduce((prev, curr, idx) => {
+            const newIndex = items.reduce((prev, curr, idx) => {
                 return Math.abs(curr.offsetLeft - scrollLeft) < Math.abs(items[prev].offsetLeft - scrollLeft) 
                     ? idx : prev;
             }, 0);
-
-            // Hedef indeksi belirle
-            let targetIndex = direction === 'left' ? currentIndex - 1 : currentIndex + 1;
             
-            // Sınırları kontrol et (0 ile son resim arası)
-            targetIndex = Math.max(0, Math.min(items.length - 1, targetIndex));
-            
-            // Hedef resmin tam başlangıç koordinatına (offsetLeft) pürüzsüzce kaydır
-            container.scrollTo({
-                left: items[targetIndex].offsetLeft,
-                behavior: 'smooth'
-            });
+            if(newIndex !== activeIndex) {
+                 // Sadece çok gerekliyse state güncellemesi yapılabilir
+                 // Ama butona odaklanmak için şimdilik pasif bırakıyoruz.
+            }
         }
     };
-
-    const scrollLeft = () => scroll('left');
-    const scrollRight = () => scroll('right');
 
     return (
         <section id="portföy" className="scroll-mt-24 min-h-screen flex flex-col justify-center py-32 px-6 bg-white overflow-hidden">
@@ -68,31 +78,42 @@ const ProjectsSlider: React.FC<ProjectsSliderProps> = ({ data, meta, showIndex }
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-16 gap-8">
                     <div>
                         <span className="text-[#A68BA6] text-xs tracking-[0.4em] uppercase font-bold mb-4 block">{meta?.badge}</span>
-                        <h2 className="text-4xl md:text-5xl font-serif">{meta?.titleLine1} <span className="italic font-light">{meta?.titleLine2}</span></h2>
+                        <h2 className="text-4xl md:text-5xl font-serif">
+                            {meta?.titleLine1} <span className="italic font-light">{meta?.titleLine2}</span>
+                        </h2>
                     </div>
                     <div className="flex space-x-4">
-                        <button onClick={scrollLeft} className="w-12 h-12 rounded-full border border-[#2D2926]/20 flex items-center justify-center hover:bg-[#2D2926] hover:text-white transition-all">
+                        <button 
+                            onClick={scrollLeft} 
+                            disabled={activeIndex === 0}
+                            className={`w-12 h-12 rounded-full border border-[#2D2926]/20 flex items-center justify-center transition-all ${activeIndex === 0 ? 'opacity-30 cursor-not-allowed' : 'hover:bg-[#2D2926] hover:text-white'}`}
+                        >
                             <ChevronLeft size={20} />
                         </button>
-                        <button onClick={scrollRight} className="w-12 h-12 rounded-full border border-[#2D2926]/20 flex items-center justify-center hover:bg-[#2D2926] hover:text-white transition-all">
+                        <button 
+                            onClick={scrollRight} 
+                            disabled={activeIndex === data.length - 1}
+                            className={`w-12 h-12 rounded-full border border-[#2D2926]/20 flex items-center justify-center transition-all ${activeIndex === data.length - 1 ? 'opacity-30 cursor-not-allowed' : 'hover:bg-[#2D2926] hover:text-white'}`}
+                        >
                             <ChevronRight size={20} />
                         </button>
                     </div>
                 </div>
 
-                <div className="relative w-full -mx-6 px-6 md:mx-0 md:px-0">
+                <div className="relative w-full">
                     <div
                         ref={scrollContainerRef}
-                        className="flex gap-6 overflow-x-auto snap-x snap-mandatory pb-8 hide-scrollbar"
+                        onScroll={handleScroll}
+                        className="flex gap-6 overflow-x-auto pb-8 hide-scrollbar snap-x snap-mandatory"
                         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
                     >
                         {data?.map((project, index) => (
                             <div
                                 key={project?.id || index}
-                                className="relative flex-shrink-0 w-[240px] sm:w-[280px] md:w-[320px] lg:w-[350px] aspect-[4/5] rounded-[3rem] overflow-hidden group snap-start snap-always shadow-xl hover:shadow-2xl transition-all duration-700 bg-white"
+                                className="relative flex-shrink-0 w-[85vw] sm:w-[280px] md:w-[320px] lg:w-[350px] aspect-[4/5] rounded-[3rem] overflow-hidden group snap-start shadow-xl bg-white transition-all duration-500"
                             >
                                 {showIndex && (
-                                    <div className="absolute top-6 left-6 z-[30] w-10 h-10 bg-orange-600 text-white rounded-2xl flex items-center justify-center font-black shadow-2xl border-2 border-white/30 animate-in zoom-in duration-300">
+                                    <div className="absolute top-6 left-6 z-[30] w-10 h-10 bg-orange-600 text-white rounded-2xl flex items-center justify-center font-black shadow-2xl border-2 border-white/30">
                                         {index + 1}
                                     </div>
                                 )}
@@ -101,36 +122,27 @@ const ProjectsSlider: React.FC<ProjectsSliderProps> = ({ data, meta, showIndex }
                                         src={project.img} 
                                         alt={project?.title || 'Proje'} 
                                         fill
-                                        sizes="(max-width: 768px) 85vw, (max-width: 1024px) 50vw, 33vw"
+                                        sizes="(max-width: 768px) 85vw, 350px"
                                         className="object-cover transition-transform duration-1000 group-hover:scale-110" 
                                     />
                                 ) : (
-                                    <div className="w-full h-full bg-stone-100 flex items-center justify-center text-[#A68BA6]/30 uppercase tracking-widest text-[10px] font-bold">
+                                    <div className="w-full h-full bg-stone-100 flex items-center justify-center text-[#A68BA6]/30 uppercase scale-90">
                                         Görsel Hazırlanıyor
                                     </div>
                                 )}
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-8 text-white opacity-90 group-hover:opacity-100 transition-opacity duration-500">
-                                    <span className="text-[#E6DDE6] text-[10px] tracking-widest uppercase font-bold mb-3 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500">{project?.category}</span>
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-8 text-white">
+                                    <span className="text-[#E6DDE6] text-[10px] tracking-widest uppercase font-bold mb-3">{project?.category}</span>
                                     <div>
-                                        <h3 className="text-2xl md:text-3xl font-serif mb-2 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500 delay-75">{project?.title}</h3>
-                                        <p className="font-light text-sm text-white/80 line-clamp-2 transform translate-y-4 group-hover:translate-y-0 opacity-0 group-hover:opacity-100 transition-all duration-500 delay-150">{project?.desc}</p>
+                                        <h3 className="text-2xl md:text-3xl font-serif mb-2">{project?.title}</h3>
+                                        <p className="font-light text-sm text-white/80 line-clamp-2">{project?.desc}</p>
                                     </div>
                                 </div>
-                                <button className="absolute top-6 right-6 w-12 h-12 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center opacity-0 group-hover:opacity-100 hover:bg-white hover:text-black transition-all duration-500 transform translate-x-4 group-hover:translate-x-0">
-                                    <ArrowUpRight size={20} />
-                                </button>
                             </div>
                         ))}
                     </div>
                 </div>
             </div>
-            {/* Adding support for hide-scrollbar class directly here for convenience */}
-            <style dangerouslySetInnerHTML={{
-                __html: `
-                .hide-scrollbar::-webkit-scrollbar {
-                    display: none;
-                }
-            `}} />
+            <style dangerouslySetInnerHTML={{ __html: `.hide-scrollbar::-webkit-scrollbar { display: none; }` }} />
         </section>
     );
 };
