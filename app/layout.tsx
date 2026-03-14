@@ -37,7 +37,10 @@ export async function generateMetadata() {
   const meta = await getMetaData();
 
   return {
-    metadataBase: new URL("https://mitraevent.com"),
+    metadataBase: new URL("https://mitraevent.com.tr"),
+    alternates: {
+      canonical: "/",
+    },
     title: meta.siteTitle || "Mitra Event",
     description: meta.siteDescription || "Organizasyon ve Etkinlik Yönetimi",
     keywords: meta.keywords || "",
