@@ -36,20 +36,24 @@ const ProjectsSlider: React.FC<ProjectsSliderProps> = ({ data, meta, showIndex }
             const items = Array.from(container.children) as HTMLElement[];
             if (items.length <= 1) return;
 
-            // İki kart arasındaki GERÇEK mesafeyi ölç (gap ve scaling dahil en kesin yol)
-            const itemWidth = items[1].offsetLeft - items[0].offsetLeft;
+            const scrollLeft = container.scrollLeft;
             
-            // Şu an kaçıncı kartta olduğumuzu bul
-            const currentIndex = Math.round(container.scrollLeft / itemWidth);
-            
+            // Şu anki kaydırma pozisyonuna EN YAKIN olan resmin indeksini bul
+            // Bu yöntem mobil/masaüstü fark etmeksizin nerede olduğumuzu en net söyleyen yoldur.
+            const currentIndex = items.reduce((prev, curr, idx) => {
+                return Math.abs(curr.offsetLeft - scrollLeft) < Math.abs(items[prev].offsetLeft - scrollLeft) 
+                    ? idx : prev;
+            }, 0);
+
+            // Hedef indeksi belirle
             let targetIndex = direction === 'left' ? currentIndex - 1 : currentIndex + 1;
             
-            // Sınırları kontrol et
+            // Sınırları kontrol et (0 ile son resim arası)
             targetIndex = Math.max(0, Math.min(items.length - 1, targetIndex));
             
-            // Tam olarak hedef kartın koordinatına git
+            // Hedef resmin tam başlangıç koordinatına (offsetLeft) pürüzsüzce kaydır
             container.scrollTo({
-                left: targetIndex * itemWidth,
+                left: items[targetIndex].offsetLeft,
                 behavior: 'smooth'
             });
         }
@@ -79,7 +83,7 @@ const ProjectsSlider: React.FC<ProjectsSliderProps> = ({ data, meta, showIndex }
                 <div className="relative w-full -mx-6 px-6 md:mx-0 md:px-0">
                     <div
                         ref={scrollContainerRef}
-                        className="flex gap-6 overflow-x-auto snap-x snap-proximity pb-8 hide-scrollbar"
+                        className="flex gap-6 overflow-x-auto snap-x snap-mandatory pb-8 hide-scrollbar"
                         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
                     >
                         {data?.map((project, index) => (
