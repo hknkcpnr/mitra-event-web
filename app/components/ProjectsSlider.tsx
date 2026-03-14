@@ -33,12 +33,18 @@ const ProjectsSlider: React.FC<ProjectsSliderProps> = ({ data, meta, showIndex }
     const scroll = (direction: 'left' | 'right') => {
         if (scrollContainerRef.current) {
             const container = scrollContainerRef.current;
-            // Konteynırın görünür genişliğinin %80'i kadar kaydır. 
-            // Bu değer, her zaman en az bir kartı geçmeyi ve snap noktasını tetiklemeyi garanti eder.
-            const scrollAmount = container.clientWidth * 0.8;
+            const item = container.firstElementChild as HTMLElement;
+            if (!item) return;
 
-            container.scrollBy({ 
-                left: direction === 'left' ? -scrollAmount : scrollAmount, 
+            // Bir kartın genişliği + boşluk (gap-6 = 24px)
+            const step = item.offsetWidth + 24;
+            
+            // Mevcut pozisyonu adıma bölerek hangi indekste olduğumuzu bul (yuvarlayarak)
+            const currentIndex = Math.round(container.scrollLeft / step);
+            const targetIndex = direction === 'left' ? currentIndex - 1 : currentIndex + 1;
+
+            container.scrollTo({ 
+                left: targetIndex * step, 
                 behavior: 'smooth' 
             });
         }
@@ -68,7 +74,7 @@ const ProjectsSlider: React.FC<ProjectsSliderProps> = ({ data, meta, showIndex }
                 <div className="relative w-full -mx-6 px-6 md:mx-0 md:px-0">
                     <div
                         ref={scrollContainerRef}
-                        className="flex gap-6 overflow-x-auto snap-x snap-proximity pb-8 hide-scrollbar"
+                        className="flex gap-6 overflow-x-auto snap-x snap-mandatory pb-8 hide-scrollbar"
                         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
                     >
                         {data?.map((project, index) => (
