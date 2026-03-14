@@ -33,13 +33,9 @@ const ProjectsSlider: React.FC<ProjectsSliderProps> = ({ data, meta, showIndex }
     const scroll = (direction: 'left' | 'right') => {
         if (scrollContainerRef.current) {
             const container = scrollContainerRef.current;
-            const firstItem = container.firstElementChild as HTMLElement;
-            
-            // Eğer çocuk eleman varsa, bir kartın genişliğini + boşluğu (gap-6 = 24px) hesapla
-            // Aksi halde ekran genişliğine göre yedek bir değer kullan
-            const scrollAmount = firstItem 
-                ? firstItem.offsetWidth + 24 
-                : (window.innerWidth > 768 ? 600 : 300);
+            // Konteynırın görünür genişliğinin %80'i kadar kaydır. 
+            // Bu değer, her zaman en az bir kartı geçmeyi ve snap noktasını tetiklemeyi garanti eder.
+            const scrollAmount = container.clientWidth * 0.8;
 
             container.scrollBy({ 
                 left: direction === 'left' ? -scrollAmount : scrollAmount, 
