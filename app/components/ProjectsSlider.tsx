@@ -36,23 +36,29 @@ const ProjectsSlider: React.FC<ProjectsSliderProps> = ({ data, meta, showIndex }
             const items = Array.from(container.children) as HTMLElement[];
             if (items.length === 0) return;
 
-            const scrollLeft = container.scrollLeft;
-            
-            // Mevcut görünür indeksi bul (küçük bir tolerans payı ile)
-            let currentIndex = items.findIndex(item => item.offsetLeft >= scrollLeft - 10);
-            
-            if (currentIndex === -1) currentIndex = 0;
+            // Görünür olan merkezi resmi bul
+            const center = container.scrollLeft + container.offsetWidth / 2;
+            let currentIndex = 0;
+            let minDistance = Infinity;
 
-            let targetIndex = direction === 'left' ? currentIndex - 1 : currentIndex + 1;
-            
-            // Sınırları kontrol et
-            targetIndex = Math.max(0, Math.min(items.length - 1, targetIndex));
-            
-            // Hedef kartın tam başlangıç noktasına kaydır
-            container.scrollTo({ 
-                left: items[targetIndex].offsetLeft, 
-                behavior: 'smooth' 
+            items.forEach((item, index) => {
+                const itemCenter = item.offsetLeft + item.offsetWidth / 2;
+                const distance = Math.abs(itemCenter - center);
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    currentIndex = index;
+                }
             });
+
+            const targetIndex = direction === 'left' ? currentIndex - 1 : currentIndex + 1;
+
+            if (targetIndex >= 0 && targetIndex < items.length) {
+                items[targetIndex].scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'nearest',
+                    inline: 'start'
+                });
+            }
         }
     };
 
