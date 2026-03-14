@@ -30,19 +30,26 @@ interface ProjectsSliderProps {
 const ProjectsSlider: React.FC<ProjectsSliderProps> = ({ data, meta, showIndex }) => {
     const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-    const scrollLeft = () => {
+    const scroll = (direction: 'left' | 'right') => {
         if (scrollContainerRef.current) {
-            const scrollAmount = window.innerWidth > 768 ? 600 : 300;
-            scrollContainerRef.current.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+            const container = scrollContainerRef.current;
+            const firstItem = container.firstElementChild as HTMLElement;
+            
+            // Eğer çocuk eleman varsa, bir kartın genişliğini + boşluğu (gap-6 = 24px) hesapla
+            // Aksi halde ekran genişliğine göre yedek bir değer kullan
+            const scrollAmount = firstItem 
+                ? firstItem.offsetWidth + 24 
+                : (window.innerWidth > 768 ? 600 : 300);
+
+            container.scrollBy({ 
+                left: direction === 'left' ? -scrollAmount : scrollAmount, 
+                behavior: 'smooth' 
+            });
         }
     };
 
-    const scrollRight = () => {
-        if (scrollContainerRef.current) {
-            const scrollAmount = window.innerWidth > 768 ? 600 : 300;
-            scrollContainerRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
-        }
-    };
+    const scrollLeft = () => scroll('left');
+    const scrollRight = () => scroll('right');
 
     return (
         <section id="portföy" className="scroll-mt-24 min-h-screen flex flex-col justify-center py-32 px-6 bg-white overflow-hidden">
@@ -65,7 +72,7 @@ const ProjectsSlider: React.FC<ProjectsSliderProps> = ({ data, meta, showIndex }
                 <div className="relative w-full -mx-6 px-6 md:mx-0 md:px-0">
                     <div
                         ref={scrollContainerRef}
-                        className="flex gap-6 overflow-x-auto snap-x snap-mandatory pb-8 hide-scrollbar"
+                        className="flex gap-6 overflow-x-auto snap-x snap-proximity pb-8 hide-scrollbar"
                         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
                     >
                         {data?.map((project, index) => (
