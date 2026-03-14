@@ -42,7 +42,9 @@ const Footer: React.FC<FooterProps> = ({ data, brand }) => {
                         <div className="flex flex-col md:flex-row justify-between items-center mb-10 gap-4">
                             <div>
                                 <h4 className="text-[10px] font-extrabold tracking-[0.4em] uppercase text-[#A68BA6] mb-2">Instagram'da Bizi Takip Edin</h4>
-                                <p className="text-2xl font-serif italic text-[#2D2926]">@mitraevent</p>
+                                <p className="text-2xl font-serif italic text-[#2D2926]">
+                                    @{data.socials?.instagram ? data.socials.instagram.split('/').filter(Boolean).pop() : 'mitraevent'}
+                                </p>
                             </div>
                             <a 
                                 href={data.socials?.instagram || "https://instagram.com/mitraevent"} 
