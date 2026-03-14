@@ -82,19 +82,21 @@ const ProjectsSlider: React.FC<ProjectsSliderProps> = ({ data, meta, showIndex }
                             setIsEnd(s.isEnd);
                         }}
                         modules={[Navigation]}
-                        spaceBetween={24}
-                        slidesPerView={"auto"}
+                        spaceBetween={30}
                         className="!overflow-visible"
                         grabCursor={true}
                         breakpoints={{
-                            // Responsive widths
-                            320: { slidesPerView: "auto", spaceBetween: 20 },
-                            768: { slidesPerView: "auto", spaceBetween: 24 }
+                            // Mobile: 1.2 slides (shows next one partially)
+                            320: { slidesPerView: 1.2, spaceBetween: 16 },
+                            // Tablet: 2.2 slides
+                            768: { slidesPerView: 2.2, spaceBetween: 24 },
+                            // Desktop: Exactly 3 slides
+                            1024: { slidesPerView: 3, spaceBetween: 30 }
                         }}
                     >
                         {data.map((project, index) => (
-                            <SwiperSlide key={project.id || index} className="!w-auto">
-                                <div className="relative w-[300px] sm:w-[280px] md:w-[320px] lg:w-[350px] aspect-[4/5] rounded-[3rem] overflow-hidden group shadow-xl bg-white transition-all duration-500">
+                            <SwiperSlide key={project.id || index}>
+                                <div className="relative w-full aspect-[4/5] rounded-[3rem] overflow-hidden group shadow-xl bg-white transition-all duration-500">
                                     {showIndex && (
                                         <div className="absolute top-6 left-6 z-[30] w-10 h-10 bg-orange-600 text-white rounded-2xl flex items-center justify-center font-black shadow-2xl border-2 border-white/30">
                                             {index + 1}
@@ -105,7 +107,7 @@ const ProjectsSlider: React.FC<ProjectsSliderProps> = ({ data, meta, showIndex }
                                             src={project.img} 
                                             alt={project?.title || 'Proje'} 
                                             fill
-                                            sizes="(max-width: 768px) 300px, 350px"
+                                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                                             className="object-cover transition-transform duration-1000 group-hover:scale-110" 
                                         />
                                     ) : (
