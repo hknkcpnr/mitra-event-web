@@ -33,15 +33,25 @@ const ProjectsSlider: React.FC<ProjectsSliderProps> = ({ data, meta, showIndex }
     const scroll = (direction: 'left' | 'right') => {
         if (scrollContainerRef.current) {
             const container = scrollContainerRef.current;
-            const firstItem = container.firstElementChild as HTMLElement;
-            if (firstItem) {
-                // Kartın genişliği + gap (24px)
-                const scrollAmount = firstItem.offsetWidth + 24;
-                container.scrollBy({ 
-                    left: direction === 'left' ? -scrollAmount : scrollAmount, 
-                    behavior: 'smooth' 
-                });
-            }
+            const items = Array.from(container.children) as HTMLElement[];
+            if (items.length <= 1) return;
+
+            // İki kart arasındaki GERÇEK mesafeyi ölç (gap ve scaling dahil en kesin yol)
+            const itemWidth = items[1].offsetLeft - items[0].offsetLeft;
+            
+            // Şu an kaçıncı kartta olduğumuzu bul
+            const currentIndex = Math.round(container.scrollLeft / itemWidth);
+            
+            let targetIndex = direction === 'left' ? currentIndex - 1 : currentIndex + 1;
+            
+            // Sınırları kontrol et
+            targetIndex = Math.max(0, Math.min(items.length - 1, targetIndex));
+            
+            // Tam olarak hedef kartın koordinatına git
+            container.scrollTo({
+                left: targetIndex * itemWidth,
+                behavior: 'smooth'
+            });
         }
     };
 
@@ -69,7 +79,7 @@ const ProjectsSlider: React.FC<ProjectsSliderProps> = ({ data, meta, showIndex }
                 <div className="relative w-full -mx-6 px-6 md:mx-0 md:px-0">
                     <div
                         ref={scrollContainerRef}
-                        className="flex gap-6 overflow-x-auto snap-x snap-mandatory pb-8 hide-scrollbar"
+                        className="flex gap-6 overflow-x-auto snap-x snap-proximity pb-8 hide-scrollbar"
                         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
                     >
                         {data?.map((project, index) => (
